@@ -1,0 +1,28 @@
+opam-version: "2.0"
+version:"0.3.0"
+maintainer:   ["angelo@adlink-labs.tech"]
+authors:      ["Angelo Corsaro"]
+homepage:     "https://github.com/atolab"
+bug-reports:  "https://github.com/atolab/ato-pervasives/issues/"
+dev-repo:     "https://github.com/atolab/ato-pervasives.git"
+
+license: "EPL2"
+
+build: [
+  ["jbuilder" "build" "--only" "hello_world" "--root" "." "-j" jobs "@install"]
+]
+
+
+depends: [
+  "dune"
+  "cmdliner"
+  "fmt" 
+  "logs" 
+  "lwt" 
+  "ppx_deriving" 
+  "uuidm" 
+  "yojson"
+  "lwt_ppx"
+]
+
+available: [ocaml-version >= "4.03.0"]
