@@ -3,13 +3,13 @@ version:"0.3.0"
 maintainer:   ["angelo@adlink-labs.tech"]
 authors:      ["Angelo Corsaro"]
 homepage:     "https://github.com/atolab"
-bug-reports:  "https://github.com/atolab/ato-pervasives/issues/"
-dev-repo:     "https://github.com/atolab/ato-pervasives.git"
+bug-reports:  "https://github.com/atolab/apero-core/issues/"
+dev-repo:     "https://github.com/atolab/apero-core.git"
 
-license: "EPL2"
+license: "Apache-2.0"
 
 build: [
-  ["jbuilder" "build" "--only" "hello_world" "--root" "." "-j" jobs "@install"]
+  ["jbuilder" "build" "--only" "apero_net" "--root" "." "-j" jobs "@install"]
 ]
 
 
@@ -21,7 +21,6 @@ depends: [
   "lwt" 
   "ppx_deriving" 
   "uuidm" 
-  "yojson"
   "lwt_ppx"
 ]
 
