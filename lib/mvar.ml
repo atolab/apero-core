@@ -39,14 +39,18 @@ module MVar_lwt = struct
   let take_available = Lwt_mvar.take_available
   let is_empty = Lwt_mvar.is_empty
   open Common.LwtM.InfixM 
-  let read m =     
-    
+  
+  let read m =         
     (take m) >>= fun v -> (put m v) >|= fun () -> v
   
   let guarded (m:'a t) (f : 'a -> ('b Lwt.t * 'a) Lwt.t) : 'b Lwt.t = 
     take m 
     >>= fun s -> Lwt.catch 
-      (fun () -> f s  >>= fun (r, s') -> put m s' >>= fun () -> r)
+      (fun () -> 
+        try 
+          f s  >>=  fun (r, s') -> put m s' >>= fun () -> r
+        with 
+        | _ as e -> put m s >>= fun () -> Lwt.fail e)
       (fun e -> put m s >>= fun () -> Lwt.fail e)
 
     
