@@ -9,7 +9,7 @@ dev-repo:     "https://github.com/atolab/apero-core.git"
 license: "Apache-2.0"
 
 build: [
-  ["jbuilder" "build" "--only" "apero_net" "--root" "." "-j" jobs "@install"]
+  ["jbuilder" "build" "--only" "apero_core" "--root" "." "-j" jobs "@install"]
 ]
 
 
