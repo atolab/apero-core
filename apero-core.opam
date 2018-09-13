@@ -1,15 +1,15 @@
 opam-version: "2.0"
-version:"0.3.0"
+version:"0.3.1"
 maintainer:   ["angelo@adlink-labs.tech"]
 authors:      ["Angelo Corsaro"]
 homepage:     "https://github.com/atolab"
 bug-reports:  "https://github.com/atolab/apero-core/issues/"
-dev-repo:     "https://github.com/atolab/apero-core.git"
+dev-repo:     "git://github.com/atolab/apero-core.git"
 
 license: "Apache-2.0"
 
 build: [
-  ["jbuilder" "build" "--only" "apero_core" "--root" "." "-j" jobs "@install"]
+  ["jbuilder" "build" "--only" "apero-core" "--root" "." "-j" jobs "@install"]
 ]
 
 
@@ -23,5 +23,3 @@ depends: [
   "uuidm" 
   "lwt_ppx"
 ]
-
-available: [ocaml-version >= "4.03.0"]
