@@ -81,6 +81,7 @@ module Option : sig
     val (<$>) : ('a -> 'b) -> ('a option -> 'b option)
     val (<$$>) : ('a -> 'b -> 'c) -> ('a option -> 'b option -> 'c option)
     val (>==) : 'a option -> ('a -> 'b) -> 'b option
+    val (>?=) : 'a option -> 'a -> 'a
   end
 end
 

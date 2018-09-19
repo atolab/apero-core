@@ -125,8 +125,8 @@ module Option = struct
     | None -> None
 
   let map o f = match o with 
-  | Some v -> Some (f v)
-  | None -> None
+    | Some v -> Some (f v)
+    | None -> None
 
   let return v = Some v
 
@@ -177,6 +177,7 @@ module Option = struct
     let (<$>) = lift
     let (<$$>) = lift2
     let (>==) a b = lift b a
+    let (>?=) a b = get_or_default a b
   end
 
 
