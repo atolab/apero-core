@@ -7,22 +7,22 @@ module type MVar = sig
   val take : 'a t -> 'a Lwt.t
   val take_available : 'a t -> 'a option
   val is_empty : 'a t -> bool
-  
+
   val read : 'a t -> 'a Lwt.t  
   (* [read] provides a reference to the value stored on the mvar
      that is safe for read-only operation. This allows to have
      read/write concurrency while leveraging functional data 
      structures
   *)
- val guarded : 'a t -> ('a -> ('b Lwt.t * 'a) Lwt.t) -> 'b Lwt.t
+  val guarded : 'a t -> ('a -> ('b Lwt.t * 'a) Lwt.t) -> 'b Lwt.t
   (* [guarded] execute a function that changes the state and returns
      a result promise while ensuring the the mvar is acquired before 
      executing the function and released after even if exceptions
      are raised while running the function *)
-  
+
   val guarded_and_then : 'a t -> ('a -> ('b Lwt.t * 'a) Lwt.t) -> ('a -> 'b Lwt.t -> 'c Lwt.t) -> 'c Lwt.t
   (* [guarded_and_then m f g] runs  f as "guarded m f" but progagates the result and the new state
-    to execute g. Notice that g cannot change the state thus is a read-only operation *)
+     to execute g. Notice that g cannot change the state thus is a read-only operation *)
 
   val return : 'b -> 'a -> ('b Lwt.t * 'a) Lwt.t
 
@@ -39,35 +39,32 @@ module MVar_lwt = struct
   let take_available = Lwt_mvar.take_available
   let is_empty = Lwt_mvar.is_empty
   open Common.LwtM.InfixM 
-  
+
   let read m =         
     (take m) >>= fun v -> (put m v) >|= fun () -> v
-  
+
   let guarded (m:'a t) (f : 'a -> ('b Lwt.t * 'a) Lwt.t) : 'b Lwt.t = 
     take m 
-    >>= fun s -> Lwt.catch 
-      (fun () -> 
-        try 
-          f s  >>=  fun (r, s') -> put m s' >>= fun () -> r
-        with 
-        | _ as e -> put m s >>= fun () -> Lwt.fail e)
-      (fun e -> put m s >>= fun () -> Lwt.fail e)
+    >>= fun s -> Lwt.catch
+      (fun () -> f s >>= fun (r, s') -> put m s' >>= fun () -> Lwt.return r)
+      (fun e -> put m s >>= fun () -> Lwt.return (Lwt.fail e))
+    >>= (fun r -> r)
 
-    
+
 
   let guarded_and_then m f g = 
-    
+
     take m 
     >>= fun s -> Lwt.catch 
       (fun () -> 
-        f s >>= fun (r, s') -> put m s' >>= fun () -> 
-          Lwt.catch 
-          (fun () -> g s' r >>= fun r' -> Lwt.return r' )
-          (fun e -> Lwt.fail e))
+         f s >>= fun (r, s') -> put m s' >>= fun () -> 
+         Lwt.catch 
+           (fun () -> g s' r >>= fun r' -> Lwt.return r' )
+           (fun e -> Lwt.fail e))
       (fun e -> put m s >>= fun () -> Lwt.fail e)    
 
   let return v s = Lwt.return (Lwt.return v, s)
-  
+
   let return_lwt (v:'b Lwt.t) s = Lwt.return (v, s)
 
 end  
