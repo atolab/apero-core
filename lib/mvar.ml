@@ -42,7 +42,7 @@ module MVar_lwt = struct
 
   let read m = 
     match take_available m with 
-    | Some v -> Lwt.return v 
+    | Some v -> put m v >|= fun () -> v 
     | None -> (take m) >>= fun v -> (put m v) >|= fun () -> v
 
   let guarded (m:'a t) (f : 'a -> ('b Lwt.t * 'a) Lwt.t) : 'b Lwt.t = 

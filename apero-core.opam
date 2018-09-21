@@ -29,8 +29,3 @@ description: """
 Apero is collection of OCaml libraries that we use on most of our OCaml code.
 These libraries include monoids, applicative functors, monads as well as
 some extensions to OCaml Pervasives."""
-
-url {
-    http: "https://https://atolab.github.io/opam-repository/src/apero-core-0.3.0.tar.gz"
-    checksum: "187f78ffbd84ce344abbf08051788cc3"
-}
