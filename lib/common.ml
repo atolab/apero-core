@@ -108,6 +108,10 @@ module String = struct
   let ends_with s suffix = equals_at_index s (length s - length suffix) suffix
 
   let replace s c c' = map (function | x when x=c -> c' | x -> x) s
+
+  let after s i = if i >= String.length s then "" else  sub s i (length s - i)
+
+  let before s i = if i >= String.length s then s else sub s 0 i
 end
 
 

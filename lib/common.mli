@@ -44,6 +44,14 @@ module String : sig
 
   val replace : string -> char -> char -> string
   (** [replace s c' c'] replaces all occurrences of [c] in [s] with [c'] and returns the result as a new string  *)
+
+  val after : string -> int -> string
+  (** [after s i] returns the substring of [s] starting at index [i] and to the end of [s].
+      If [i] is out of bound an empty string is returned *)
+
+  val before : string -> int -> string
+  (** [before s i] returns the substring of [s] starting at index 0 and ending at index [i] (the character at index [i] is not included).
+      If [i] is out of bound [s] is returned *)
 end
 
 module type Monad = sig 
