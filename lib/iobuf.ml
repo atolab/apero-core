@@ -52,6 +52,8 @@ module IOBuf = struct
     then  return { buf with pos = pos }
     else fail (`OutOfBounds (`Msg (Printf.sprintf "IOBuf.set_position with %d > %d" pos buf.limit)))
 
+  let set_position_unsafe pos buf =  { buf with pos = pos }
+
   let limit buf = buf.limit
 
   let available buf = (buf.limit - buf.pos)

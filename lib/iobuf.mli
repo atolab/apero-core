@@ -42,6 +42,7 @@ module IOBuf : sig
 
   val position : t -> int
   val set_position : int -> t -> (t, error) result 
+  val set_position_unsafe : int -> t -> t
 
   val limit : t -> int
   val set_limit : int -> t ->  (t, error) result 
