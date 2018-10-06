@@ -4,6 +4,14 @@ let drop = Common.drop
 
 let take = Common.take
 
+let contains xs x = match List.find_opt  ((=) x) xs with 
+| Some _ -> true 
+| None -> false
+
+let rec substract xs ys = match ys with
+| [] -> xs
+| h::tl -> substract (List.filter ((=) h) xs) tl
+
 let zip = combine
 
 let unzip = split
