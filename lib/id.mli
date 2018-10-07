@@ -8,6 +8,8 @@ module type S = sig
   val equal : t -> t -> bool
   val show : t -> string
   val to_string : t -> string
+  val of_string : string -> t 
+  val of_string_opt : string -> t option 
 end 
 
 module type IdSignature = sig
@@ -18,6 +20,8 @@ module type IdSignature = sig
   val equal : t -> t -> bool  
   val compare : t -> t -> int  
   val to_string : t -> string
+  val of_string : string -> t 
+  val of_string_opt : string -> t option   
 end
 
 
