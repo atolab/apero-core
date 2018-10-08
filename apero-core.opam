@@ -8,10 +8,16 @@ dev-repo:     "git://github.com/atolab/apero-core.git"
 
 license: "Apache-2.0"
 
+
 build: [
-  ["jbuilder" "build" "--only" "apero-core" "--root" "." "-j" jobs "@install"]
+ ["dune" "subst"] {pinned}
+ ["dune" "-p" name "-j" jobs]
 ]
 
+install: [
+  ["dune" "build" "-p" name "@install"]
+  ["dune" "install" name]
+]
 
 depends: [
   "dune"
@@ -22,6 +28,7 @@ depends: [
   "ppx_deriving" 
   "uuidm" 
   "lwt_ppx"
+  "yojson"
 ]
 
 synopsis : "OCaml Utility Library"
