@@ -22,6 +22,9 @@ type error = [
 
 (* exception Exception of error [@@deriving show] *)
 exception Exception of error [@@deriving show]
+
+let () = Printexc.register_printer @@ function | Exception(e) -> Some ("Atypes.Exception: "^(show_error e)) | _ -> None
+
 module Vle = struct
   include Int64
 
