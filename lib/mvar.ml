@@ -38,7 +38,7 @@ module MVar_lwt = struct
   let take = Lwt_mvar.take
   let take_available = Lwt_mvar.take_available
   let is_empty = Lwt_mvar.is_empty
-  open Common.LwtM.InfixM 
+  open Acommon.LwtM.InfixM 
 
   let read m = 
     match take_available m with 

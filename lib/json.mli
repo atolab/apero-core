@@ -5,7 +5,7 @@ module Json : sig
 
   val of_string : string -> t
   val to_string : t -> string
-  val validate : string -> (t, Atypes.error) Common.Result.t
+  val validate : string -> (t, Atypes.error) Acommon.Result.t
 
 
 end

@@ -29,7 +29,7 @@ module Vle = struct
   include Int64
 
   let of_char =
-    let open Common.Infix in
+    let open Acommon.Infix in
     Int64.of_int <.> int_of_char
 
   let byte_mask =  0x7fL

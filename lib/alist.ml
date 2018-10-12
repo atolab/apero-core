@@ -1,8 +1,8 @@
 include List
 
-let drop = Common.drop
+let drop = Acommon.drop
 
-let take = Common.take
+let take = Acommon.take
 
 let contains xs x = match List.find_opt  ((=) x) xs with 
 | Some _ -> true 
