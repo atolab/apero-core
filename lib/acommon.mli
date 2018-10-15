@@ -15,42 +15,28 @@ module Infix : sig
   val (<*>) : ('a -> 'b) -> 'a -> 'b
 end
 
-module String : sig
-  include (module type of String)
-  val contains_string : string -> string -> bool
-  (** [String.contains_string s s'] tests if the substring [s'] appears in the string [s] *)
+module Astring : sig
+  (** [Apero.AString] module includes and extends the [Astring.String] module -
+      see its API here: {{:http://erratique.ch/software/astring/doc/Astring.String.html}[Astring.String]}
+     *)
 
-  val string_index : string -> string -> int
-  (** [String.string_index s s'] returns the index of the first occurrence of substring [s'] in string [s].
-      Raise [Not_found] if [s'] does not occus in [s] *)
+  include (module type of Astring.String)
 
-  val string_index_opt : string -> string -> int option
-  (** [string_index_opt s s'] returns the index of the first occurrence of substring [s'] in string [s],
-      or [None] if [s'] does not occur in s. *)
+  val contains : char -> string -> bool
+  (** [String.contains c s] tests if the character [c] appears in the string [s] *)
 
-  val string_rindex : string -> string -> int
-  (** [String.string_index s s'] returns the index of the last occurrence of substring [s'] in string [s].
-      Raise [Not_found] if [s'] does not occus in [s] *)
+  val contains_sub : sub:string -> string -> bool
+  (** [String.contains_string sub s] tests if the substring [sub] appears in the string [s] *)
 
-  val string_rindex_opt : string -> string -> int option
-  (** [string_index_opt s s'] returns the index of the last occurrence of substring [s'] in string [s],
-      or [None] if [s'] does not occur in s. *)
+  val replace : char -> char -> string -> string
+  (** [replace c c' s] replaces all occurrences of [c] in [s] with [c'] and returns the result as a new string  *)
 
-  val starts_with : string -> string -> bool
-  (** [String.starts_with s s'] tests if the string [s] starts with the prefix [s']  *)
-
-  val ends_with : string -> string -> bool
-  (** [String.ends_with s s'] tests if the string [s] ends with the suffix [s']  *)
-
-  val replace : string -> char -> char -> string
-  (** [replace s c' c'] replaces all occurrences of [c] in [s] with [c'] and returns the result as a new string  *)
-
-  val after : string -> int -> string
-  (** [after s i] returns the substring of [s] starting at index [i] and to the end of [s].
+  val after : int -> string -> string
+  (** [after i s] returns the substring of [s] starting at index [i] and to the end of [s].
       If [i] is out of bound an empty string is returned *)
 
-  val before : string -> int -> string
-  (** [before s i] returns the substring of [s] starting at index 0 and ending at index [i] (the character at index [i] is not included).
+  val before : int -> string -> string
+  (** [before i s] returns the substring of [s] starting at index 0 and ending at index [i] (the character at index [i] is not included).
       If [i] is out of bound [s] is returned *)
 end
 

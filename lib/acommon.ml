@@ -38,80 +38,18 @@ let apply_n (t : 'a) (f : 'a -> 'b)  (n: int) =
     else loop_n (n-1) ((f t) :: xs)
   in loop_n n []
 
-module String = struct
-  include String
+module Astring = struct
+  include Astring.String
 
-  let rec equals_at_index_rec s lim i s' lim' j =
-    if j >= lim' then true
-    else if i >= lim then false
-    else if get s i != get s' j then false
-    else equals_at_index_rec s lim (i+1) s' lim' (j+1)
+  let contains c = exists (fun c' -> c = c')
 
-  let equals_at_index s i s' =
-    let l = length s and l' = length s' in
-    if l' = 0 then true
-    else if l-l'-i < 0 then false
-    else equals_at_index_rec s l i s' l' 0
+  let contains_sub ~sub s = match find_sub ~sub s with | Some _ -> true | None -> false
 
-  let rec string_index_rec s lim i s' =
-    if i >= lim then raise Not_found
-    else
-      let j = index_from s i (get s' 0) in
-      if equals_at_index s j s' then j
-      else string_index_rec s lim (j+1) s'
+  let replace c c' = map (function | x when x=c -> c' | x -> x)
 
-  let string_index s s' =
-    if length s' = 0 then 0
-    else string_index_rec s (length s) 0 s'
+  let after i = with_index_range ~first:i ~last:max_int
 
-  let rec string_index_opt_rec s lim i s' =
-    if i >= lim then None
-    else
-      match index_from_opt s i (get s 0) with
-      | None -> None
-      | Some j ->
-        if equals_at_index s j s' then Some j
-        else string_index_opt_rec s lim (j+1) s'
-
-  let string_index_opt s s' =
-    if length s' = 0 then Some 0
-    else string_index_opt_rec s (length s) 0 s'
-
-  let rec string_rindex_rec s i s' =
-    if i < 0 then raise Not_found
-    else
-      let j = rindex_from s i (get s 0) in
-      if equals_at_index s j s' then j
-      else string_rindex_rec s (j-1) s'
-
-  let string_rindex s s' =
-    if length s' = 0 then 0
-    else string_rindex_rec s (length s - 1) s'
-
-  let rec string_rindex_opt_rec s i s' =
-    if i < 0 then None
-    else
-      match rindex_from_opt s i (get s 0) with
-      | None -> None
-      | Some j ->
-        if equals_at_index s j s' then Some j
-        else string_rindex_opt_rec s (j-1) s'
-
-  let string_rindex_opt s s' = 
-    if length s' = 0 then Some 0
-    else string_rindex_opt_rec s (length s - 1) s'
-
-  let contains_string s s' = string_index_opt s s' != None
-
-  let starts_with s prefix = equals_at_index s 0 prefix
-
-  let ends_with s suffix = equals_at_index s (length s - length suffix) suffix
-
-  let replace s c c' = map (function | x when x=c -> c' | x -> x) s
-
-  let after s i = if i >= String.length s then "" else  sub s i (length s - i)
-
-  let before s i = if i >= String.length s then s else sub s 0 i
+  let before i = with_index_range ~first:0 ~last:(i-1)
 end
 
 
