@@ -16,12 +16,15 @@ module IOBuf = struct
 
   let compare a b = Id.compare a.id b.id 
 
-  let to_string buf =
-    let rec hexa_print idx =
+  let hexdump ?separator:(sep="") buf =
+    let rec hexdump buf idx =
       if idx < buf.limit then 
-        (Printf.sprintf "%x:" @@ int_of_char @@ Lwt_bytes.get buf.buffer idx ) ^ (hexa_print (idx+1)) 
-      else ""
-    in "(pos: " ^ (string_of_int buf.pos) ^ ", limit: "^ (string_of_int buf.limit) ^ " content: " ^ (hexa_print 0)
+        (Printf.sprintf "%02x%s" (int_of_char @@ Lwt_bytes.get buf.buffer idx) sep ) ^ (hexdump buf (idx+1)) 
+      else "" in 
+    hexdump buf 0
+    
+  let to_string buf =
+    "(pos: " ^ (string_of_int buf.pos) ^ ", limit: "^ (string_of_int buf.limit) ^ " content: " ^ (hexdump buf ~separator:":")
 
   let create len =  
     Logs.debug (fun m -> m "IOBuf.create %d " len);

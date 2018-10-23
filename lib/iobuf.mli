@@ -71,6 +71,8 @@ module IOBuf : sig
 
   val get_buf : int -> t -> (t*t, error) result 
 
+  val hexdump : ?separator:string -> t -> string
+
   val to_string : t -> string
 
   type io_vector = Lwt_bytes.io_vector
