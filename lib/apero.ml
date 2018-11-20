@@ -4,6 +4,7 @@ include Iobuf
 include State
 include Ordered
 include Key_value
+include Properties
 include Uuid
 include Mvar
 include Json
