@@ -14,8 +14,17 @@ module Properties = struct
 
   let to_list = bindings
 
-  let to_string (p:Property.Value.t t) =
-    to_list p |> List.map (fun (k,v)-> k^"="^v) |> String.concat ","
+  let of_string ?(prop_sep=",") ?(kv_sep="=") s =
+    let add_prop props p =
+      match Astring.cut ~sep:kv_sep p with
+      | Some (k,v) -> add k v props
+      | None -> add p "" props
+    in
+    Astring.cuts ~sep:prop_sep s |> List.fold_left add_prop empty
+
+
+  let to_string ?(prop_sep=",") ?(kv_sep="=") (p:Property.Value.t t) =
+    to_list p |> List.map (fun (k,v)-> k^kv_sep^v) |> String.concat prop_sep
   
   let contains_key prop ps = match get prop ps with | Some _ -> true | None -> false 
 
