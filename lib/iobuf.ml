@@ -12,6 +12,7 @@ module IOBuf = struct
     ; capacity: int
     ; mark : int
     ; id : Id.t
+    ; grow : int
   }
 
   let compare a b = Id.compare a.id b.id 
@@ -26,16 +27,21 @@ module IOBuf = struct
   let to_string buf =
     "(pos: " ^ (string_of_int buf.pos) ^ ", limit: "^ (string_of_int buf.limit) ^ " content: " ^ (hexdump buf ~separator:":")
 
-  let create len =  
+  let create ?(grow=0) len =  
     Logs.debug (fun m -> m "IOBuf.create %d " len);
-    { buffer = Lwt_bytes.create len;  pos = 0; limit = len; capacity = len; mark = 0; id = Id.next_id ()}
+    { buffer = Lwt_bytes.create len;  pos = 0; limit = len; capacity = len; mark = 0; id = Id.next_id (); grow }
 
   let to_bytes buf = buf.buffer
 
-  let from_bytes bs =
+  let from_bytes ?(grow=0) bs =
     let len = Lwt_bytes.length bs in
-    { buffer = bs; pos =  0; limit = len; capacity = len; mark = 0; id = Id.next_id ()}
+    { buffer = bs; pos =  0; limit = len; capacity = len; mark = 0; id = Id.next_id (); grow }
 
+  let expand_buf orig n = 
+    let nbuf = create ~grow:n (n + orig.capacity) in 
+    Lwt_bytes.blit orig.buffer 0 nbuf.buffer 0 orig.limit;
+    {nbuf with pos = orig.pos; limit = nbuf.capacity}
+  
   let flip buf = { buf with limit = buf.pos; pos = 0 }
 
   let clear buf = { buf with limit = buf.capacity; pos = 0 }
@@ -66,18 +72,23 @@ module IOBuf = struct
     then return { buf with limit = lim}
     else fail (`OutOfBounds (`Msg (Printf.sprintf "IOBuf.set_limit with %d > %d" lim buf.capacity)))
 
+  
   let reset_with pos lim buf =
     set_position pos buf
     >>= (set_limit lim)
 
-  let put_char c buf =
+  let rec put_char c buf = 
     if buf.pos < buf.limit then
       begin
         Lwt_bytes.set buf.buffer buf.pos c
       ; return { buf with pos = buf.pos + 1}
       end
     else
-      fail (`OutOfBounds (`Msg "IOBuf.put_char"))
+      match buf.grow with 
+      | 0 -> fail (`OutOfBounds (`Msg "IOBuf.put_char"))
+      | n -> put_char c (expand_buf buf n)
+        
+
 
   let get_char buf =
     if buf.pos < buf.limit then
@@ -88,14 +99,17 @@ module IOBuf = struct
     else 
       fail (`OutOfBounds (`Msg "IOBuf.get_char"))
 
-  let blit_from_bytes bs ofs len  buf =
+  let rec blit_from_bytes bs ofs len  buf =
     if buf.pos + len < buf.limit then
       begin
         Lwt_bytes.blit bs ofs buf.buffer buf.pos len
       ; return { buf with pos = buf.pos + len }
       end
     else
-      fail (`OutOfBounds (`Msg "IOBuf.blit_from_bytes"))
+      match buf.grow with 
+      | 0 -> fail (`OutOfBounds (`Msg "IOBuf.blit_from_bytes"))
+      | n -> blit_from_bytes bs ofs len (expand_buf buf n)
+      
 
   let blit_to_bytes n buf = 
     if n <= available buf then 
@@ -106,9 +120,12 @@ module IOBuf = struct
       end
     else 
       fail (`OutOfBounds (`Msg "IOBuf.blit_to_bytes"))
+      
+
+    
 
   (** Copies  [b.limit - b.pos] bytes from the [src] into [buf]*)
-  let put_buf src buf  =
+  let rec put_buf src buf  =
     let len = src.limit - src.pos in
     if  len <= (available buf) then
       begin
@@ -116,7 +133,10 @@ module IOBuf = struct
         return { buf with pos = buf.pos + len}
       end
     else
-      fail (`OutOfBounds (`Msg "IOBuf.pub_buf"))
+     match buf.grow with 
+      | 0 -> fail (`OutOfBounds (`Msg "IOBuf.pub_buf"))
+      | n -> put_buf src (expand_buf buf n)
+      
     
   type io_vector = Lwt_bytes.io_vector
 
@@ -131,7 +151,7 @@ module IOBuf = struct
   let to_io_vector buf =
     Lwt_bytes.{ iov_buffer = buf.buffer; iov_offset = buf.pos; iov_length = buf.limit; }
 
-  let put_string s buf =     
+  let rec put_string s buf =     
     let len = String.length s in
     if len <= available buf then
       begin
@@ -139,7 +159,10 @@ module IOBuf = struct
         return { buf with pos = buf.pos + len }
       end 
     else 
-      fail (`OutOfBounds (`Msg "IOBuf.put_sting"))
+      match buf.grow with 
+      | 0 -> fail (`OutOfBounds (`Msg "IOBuf.put_sting"))
+      | n -> put_string s (expand_buf buf n)
+      
 
   
   let get_string len buf = 

@@ -18,7 +18,7 @@ module IOBuf : sig
 
   include Ordered.Comparable with type t := t
   
-  val create : int -> t
+  val create : ?grow:int -> int -> t
   (** [create] allocates a new IOBuf  of the given capacity. *)
 
   val to_bytes : t -> Lwt_bytes.t
@@ -26,7 +26,7 @@ module IOBuf : sig
       it can be used for I/O such as sockets, etc... This buffer should be
       considered as read-only. *)
 
-  val from_bytes : Lwt_bytes.t -> t 
+  val from_bytes : ?grow:int -> Lwt_bytes.t -> t 
   (** [from_bytes] creates an IOBuf by wrapping the provided [Lwt_bytes.t].
       The capacity for the IOBuf will be set to the buffer length. *)
 
