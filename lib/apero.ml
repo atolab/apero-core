@@ -175,6 +175,22 @@ let read5_spec log p1 p2 p3 p4 p5 c buf =
         return ((c a1 a2 a3 a4 a5),buf))))))
 
 
+let read6_spec log p1 p2 p3 p4 p5 p6 c buf = 
+  log ;
+  p1 buf 
+  >>= (fun (a1, buf) -> 
+    p2 buf 
+    >>= (fun (a2, buf) ->
+      p3 buf 
+      >>= (fun (a3, buf) ->
+        p4 buf 
+        >>= (fun (a4, buf) ->
+          p5 buf 
+          >>= (fun (a5, buf) ->
+            p6 buf 
+            >>= (fun (a6, buf) ->
+          return ((c a1 a2 a3 a4 a5 a6),buf)))))))
+
 let lwt_of_result = function 
 | Ok v -> Lwt.return v
 | Error e -> Lwt.fail @@ Exception e
