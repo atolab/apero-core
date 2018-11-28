@@ -8,6 +8,8 @@ module Properties = struct
 
   let get = find_opt
 
+  let get_or_default key ~default ps = match get key ps with | Some v -> v | None -> default
+
   let rec of_list = function
     | [] -> empty
     | (k,v)::l -> add k v @@ of_list l

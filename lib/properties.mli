@@ -11,6 +11,10 @@ module Properties : sig
   (** [get k p] returns [Some v] if [p] contains a property with name [k] where [v] is its value. 
       It returns [None] if [p] doesn't contain such property *)
 
+  val get_or_default : key -> default:'a -> 'a t -> 'a
+  (** [get_or_default def k p] returns [v] if [p] contains a property with name [k] where [v] is its value. 
+      It returns [def] if [p] doesn't contain such property *)
+
   val of_list : (key * 'a) list -> 'a t
   (** [of_list kvs] returns a properties map made from the (key,value) list [kvs].
       Note that if [kvs] contains duplicate keys, only the first associated value
