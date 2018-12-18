@@ -1,13 +1,13 @@
 module type Comparable = sig 
   type t 
   val compare : t -> t -> int      
+  val equal : t -> t -> bool
 end
 
 module Ordered = struct 
 
   module type S = sig   
     include Comparable 
-    val equal : t -> t -> bool
 
     module Infix : sig 
       val (=) : t -> t -> bool

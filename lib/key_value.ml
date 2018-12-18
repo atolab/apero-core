@@ -31,6 +31,7 @@ module KeyValueF = struct
       let compare (k1,v1) (k2,v2) = match (Key.compare k1 k2, Value.compare v1 v2) with 
       | (0, 0) -> 0
       | (a, _) -> a 
+      let equal (k1,v1) (k2,v2) = Key.equal k1 k2 && Value.equal v1 v2
     end
     
     include Ordered.Make (C) 

@@ -1,9 +1,10 @@
 open Acommon.Result
 open Acommon.Result.Infix
+open Identifiers
 
 module IOBuf = struct
 
-  module Id = Id.Make(Int64)
+  module Id = NumId.Make(Int64)
 
   type t = 
     { buffer : Lwt_bytes.t
@@ -16,6 +17,8 @@ module IOBuf = struct
   }
 
   let compare a b = Id.compare a.id b.id 
+
+  let equal a b = Id.equal a.id b.id
 
   let hexdump ?separator:(sep="") buf =
     let rec hexdump buf idx =
