@@ -9,6 +9,7 @@ include Uuid
 include Mvar
 include Json
 include Identifiers
+include Resource
 module List = Alist
 module Stringable = Stringable
 module EventStream = Event_stream.EventStream.Make(Stream_lwt.Stream)

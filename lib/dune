@@ -1,7 +1,7 @@
 (library
   (name            apero_core)
   (public_name     apero-core)  
-  (wrapped        false)
+  (wrapped         false)
   (libraries       astring uuidm lwt lwt.unix  logs logs.lwt logs.fmt logs.cli yojson fmt fmt.cli fmt.tty cmdliner ppx_deriving)
   (preprocess (pps ppx_deriving.show ppx_deriving.ord lwt_ppx)))
 
