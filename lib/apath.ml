@@ -40,6 +40,8 @@ module Path = struct
 
   let compare = Astring.compare
 
+  let equal = Astring.equal
+
   let is_relative p = Astring.get p 0 <> '/'
 
   let add_prefix ~prefix p = remove_useless_slashes @@ (to_string prefix)^"/"^p
@@ -88,6 +90,12 @@ module PathExpr = struct
   let to_string e = e
 
   let of_path p = of_string @@ Path.to_string p
+
+  let length = Astring.length
+
+  let compare = Astring.compare
+
+  let equal = Astring.equal
 
   let is_relative e = Astring.get e 0 <> '/'
 

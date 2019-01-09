@@ -13,7 +13,9 @@ module Path : sig
   val length : t -> int
   (** [length p] returns the number of characters of path [p] *)
   val compare : t -> t -> int
-  (** The comparison function for strings, with the same specification as [Pervasives.compare] *)
+  (** The comparison function for paths, with the same specification as [Pervasives.compare] *)
+  val equal : t -> t -> bool 
+  (** The equal function for paths. *)
 
   val is_relative : t -> bool
   (** [is_relative p] return true if the Path [p] is relative (i.e. it's first character is not '/') *)
@@ -38,6 +40,13 @@ module PathExpr : sig
   (** [to_string e] return the expression [e] as a string *)
   val of_path : Path.t -> t
   (** [of_path p] returns an expression equal to [p] *)
+
+  val length : t -> int
+  (** [length e] returns the number of characters of epression [e] *)
+  val compare : t -> t -> int
+  (** The comparison function for expressions, with the same specification as [Pervasives.compare] *)
+  val equal : t -> t -> bool 
+  (** The equal function for expressions. *)
 
   val is_relative : t -> bool
   (**[is_relative e] return true if the expression [e] is relative (i.e. it's first character is not '/') *)
