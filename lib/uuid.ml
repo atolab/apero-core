@@ -33,7 +33,7 @@ module Uuid = struct
 
   let encode t buf =
     let bytes = Lwt_bytes.of_string @@ to_bytes t in
-    IOBuf.blit_from_bytes bytes (IOBuf.position buf) nb_bytes buf
+    IOBuf.blit_from_bytes bytes 0 nb_bytes buf
 
   let decode buf =
     let open Result.Infix in
