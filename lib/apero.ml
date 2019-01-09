@@ -9,7 +9,7 @@ include Uuid
 include Mvar
 include Json
 include Identifiers
-include Resource
+include Apath
 module List = Alist
 module Stringable = Stringable
 module EventStream = Event_stream.EventStream.Make(Stream_lwt.Stream)
