@@ -3,7 +3,7 @@
 BUILD_LIB=dune build	
 CLEAN= dune clean
 TEST=dune runtest -j1 --no-buffer
-DOC=dune build --dev @doc
+DOC=dune build @doc
 INSTALL=dune install
 
 lib:
