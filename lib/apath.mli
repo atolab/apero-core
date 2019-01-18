@@ -29,8 +29,9 @@ end [@@deriving show]
 
 
 module PathExpr : sig 
-  type t val 
-  of_string : string -> t
+  type t
+
+  val of_string : string -> t
   (** [of_string s] returns [s] as a PathExpr if it's valid. Otherwise it raises an [Exception].
       Note that the expression is sanitized (i.e. it's trimmed meaningless '/' are removed) *)
   val of_string_opt : string -> t option
@@ -42,16 +43,20 @@ module PathExpr : sig
   (** [of_path p] returns an expression equal to [p] *)
 
   val length : t -> int
-  (** [length e] returns the number of characters of epression [e] *)
+  (** [length e] returns the number of characters of expression [e] *)
   val compare : t -> t -> int
   (** The comparison function for expressions, with the same specification as [Pervasives.compare] *)
   val equal : t -> t -> bool 
   (** The equal function for expressions. *)
 
   val is_relative : t -> bool
-  (**[is_relative e] return true if the expression [e] is relative (i.e. it's first character is not '/') *)
+  (** [is_relative e] return true if the expression [e] is relative (i.e. it's first character is not '/') *)
+  val get_prefix : t -> Path.t
+  (** [get_prefix e] return the longest prefix of [e] that is a Path (i.e. without any wildcard) *)
   val add_prefix : prefix:Path.t -> t -> t
   (** [add_prefix prefix e] return a new expression made of [prefix]/[e]. *)
+  val remove_prefix : int -> t -> t
+  (** [remove_prefix l e] removes the [l] first characters from expression [e] and returns the remaining as a non-absolute PathExpr *)
 
   val is_unique : t -> bool
   (** [is_unique e] returns true if the expression [e] doesn't contains any wildcard ('*'). *)
@@ -68,4 +73,13 @@ module PathExpr : sig
   val includes : subexpr:t -> t -> bool
   (** [includes subexpr e] returns true if the expression [e] includes the expression [subexpr].
       I.e. if [subexpr] matches a path p, [e] also matches p. *)
+
+  val longest_matching_part : Path.t -> t -> t
+  (** [longest_matching_part path e] returns the longest prefix within [e] that matches [path],
+      or an empty PathExpr no matching prefix of [path] can be found in [e]. *)
+
+  val remaining_after_match : Path.t -> t -> t option
+  (** [remaining_after_match path e] tries to find the longest prefix within [e] that matches [path] and returns the remaining part of [e] when removing this prefix.
+      If matching prefix of [path] can be found in [e], None is returned. *)
+
 end [@@deriving show]

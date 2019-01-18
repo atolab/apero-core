@@ -40,6 +40,14 @@ let includes ~subexpr e =
   with 
     | Exception e -> print_endline @@ show_error e; false
 
+let remaining_after_match p e r =
+  try
+    let expected = Option.map r PathExpr.of_string in
+    let remain = PathExpr.remaining_after_match (Path.of_string p) (PathExpr.of_string e) in
+    remain = expected
+  with
+    | Exception e -> print_endline @@ show_error e; false
+
 let test_expr_validity () =
   check_if true  __LINE__ @@ expr "/a/b/c" "/a/b/c";
   check_if true  __LINE__ @@ expr "/a b c" "/a b c";
@@ -98,7 +106,7 @@ let test_expr_matching_path_simple () =
   check_if true  __LINE__ @@ expr_matching_path "/**/xyz" "/a/b/xyz/d/e/f/xyz";
   check_if false __LINE__ @@ expr_matching_path "/**/xyz*xyz" "/a/b/xyz/d/e/f/xyz";
   check_if true  __LINE__ @@ expr_matching_path "/a/**/c/**/e" "/a/b/b/b/c/d/d/d/e";
-  check_if true __LINE__ @@ expr_matching_path "/a/**/c/**/e" "/a/c/e";
+  check_if true  __LINE__ @@ expr_matching_path "/a/**/c/**/e" "/a/c/e";
   check_if true  __LINE__ @@ expr_matching_path "/a/**/c/*/e/*" "/a/b/b/b/c/d/d/c/d/e/f";
   check_if false __LINE__ @@ expr_matching_path "/a/**/c/*/e/*" "/a/b/b/b/c/d/d/c/d/d/e/f";
   check_if false __LINE__ @@ expr_matching_path "/ab*cd" "/abxxcxxcdx";
@@ -139,7 +147,6 @@ let test_expr_includes () =
   check_if false __LINE__ @@ includes ~subexpr:"/a/x*" "/a/xb*";
   check_if false __LINE__ @@ includes ~subexpr:"/a/x*y" "/a/x*b*y";
 
-
   check_if true  __LINE__ @@ includes ~subexpr:"/a" "/a/**";
   check_if true  __LINE__ @@ includes ~subexpr:"/a/b" "/a/**";
   check_if true  __LINE__ @@ includes ~subexpr:"/a/**" "/a/**";
@@ -157,9 +164,24 @@ let test_expr_includes () =
   check_if false __LINE__ @@ includes ~subexpr:"/a/**/c" "/a/**/b/**/c";
   ()
 
+let test_remaining_after_match () =
+  check_if true  __LINE__ @@ remaining_after_match "/a/b/c" "/a/b/c/d/e"      (Some "/d/e");
+  check_if true  __LINE__ @@ remaining_after_match "/a/b/c" "/a/b/c/d/**"     (Some "/d/**");
+  check_if true  __LINE__ @@ remaining_after_match "/a/b/c" "/a/b/c/**"       (Some "/**");
+  check_if true  __LINE__ @@ remaining_after_match "/a/b/c" "/a/b/**"         (Some "/**");
+  check_if true  __LINE__ @@ remaining_after_match "/a/b/c" "/a/**"           (Some "/**");
+  check_if true  __LINE__ @@ remaining_after_match "/a/b/c" "/a/*/c/d/**"     (Some "/d/**");
+  check_if true  __LINE__ @@ remaining_after_match "/a/b/c" "/a/**/b/*/d/**"  (Some "/d/**");
+  check_if true  __LINE__ @@ remaining_after_match "/a/b/c" "/a/**/b/**/d/**" (Some "/**/d/**");
+  check_if true  __LINE__ @@ remaining_after_match "/a/b/c" "/a/b/c"          (Some "");
+  check_if true  __LINE__ @@ remaining_after_match "/a/b/c" "/a/*/c"          (Some "");
+  check_if true  __LINE__ @@ remaining_after_match "/a/b/c" "/a/**/c"         (Some "");
+  ()
+
 let all_tests = [
   "PathExpr validity", `Quick, test_expr_validity;
   "PathExpr matching path" , `Quick, test_expr_matching_path_simple;
   "PathExpr intersect" , `Quick, test_expr_intersect;
   "PathExpr includes" , `Quick, test_expr_includes;
+  "PathExpr remaining_after_match" , `Quick, test_remaining_after_match;
 ]

@@ -99,8 +99,14 @@ module PathExpr = struct
 
   let is_relative e = Astring.get e 0 <> '/'
 
+  let get_prefix e : Path.t = match Astring.find (fun c -> c = '*') e with
+    | Some i -> Path.of_string @@ Astring.before i e
+    | None -> Path.of_string e
+
   let add_prefix ~prefix e =
     remove_useless_slashes @@ (Path.to_string prefix)^"/"^e
+
+  let remove_prefix length e = Astring.after length (to_string e) |> of_string
 
   let is_unique e = not @@ Astring.contains '*' e
 
@@ -167,5 +173,21 @@ module PathExpr = struct
     let sub_chunks = String.split_on_char '/' subexpr in
     let e_chunks = String.split_on_char '/' e in 
     includes sub_chunks e_chunks get_chunk chunk_expr_includes
+
+  let rec longest_matching_part path e =
+    if length e = 0 || is_matching_path path e then e
+    else
+      match Astring.find ~rev:true (fun c -> c= '/') e with
+      | None -> ""
+      | Some i -> longest_matching_part path (Astring.before i e)
+
+  let remaining_after_match path e : t option =
+    let prefix = longest_matching_part path e in
+    match length @@ longest_matching_part path e with
+    | 0 -> None
+    | i ->
+      let remain = Astring.after i e in
+      Some (if Astring.is_suffix ~affix:"**" prefix then "/**"^remain else remain)
+
 
 end [@@deriving show]
