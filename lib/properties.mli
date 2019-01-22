@@ -24,11 +24,11 @@ module Properties : sig
 
   val of_string : ?prop_sep:string -> ?kv_sep:string -> string -> string t
   (** [of_string s] parses the string [s] using [kv_sep] as separator between key and value ("=" by default)
-      and [prop_sep] as separator between the (key,value) tuples ("," by default), and returns a properties map
+      and [prop_sep] as separator between the (key,value) tuples (";" by default), and returns a properties map
       from the parsed (key, value) tuples *)
   val to_string : ?prop_sep:string -> ?kv_sep:string -> string t -> string
   (** [to_string p] returns a string representing [p] as a (key,value) list,
-      with [prop_sep] as separator between the (key,value) tuples ("," by default)
+      with [prop_sep] as separator between the (key,value) tuples (";" by default)
       and [kv_sep] as separator between key and value ("=" by default) *)
 
   val contains_key : key -> 'a t -> bool
