@@ -12,4 +12,5 @@ let () =
   Printexc.record_backtrace true;
   Alcotest.run "Resource Test" [
     "test_resource", Test_resource.all_tests;
+    "test_vle", Test_vle.all_tests;
   ]

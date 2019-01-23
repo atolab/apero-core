@@ -1,6 +1,5 @@
 (executable
   (name       test_all)
-  (modules    test_all test_resource)
   (libraries  apero-core alcotest))
 
 (alias

@@ -18,31 +18,22 @@ module EventStream = Event_stream.EventStream.Make(Stream_lwt.Stream)
 
 open Result
 open Result.Infix
-let encode_vle v buf =
+let encode_vle ?size v buf =
   let to_char l = char_of_int @@ Int64.to_int l in
-  let rec put_negative_vle_rec  v n buf =
-    if n < Vle.max_bytes then
-      begin
-        let mv = Int64.logor Vle.more_bytes_flag (Int64.logand v Vle.byte_mask) in
-        let b = IOBuf.put_char (to_char mv) buf in
-        let sv = (Int64.shift_right v Vle.shift_len) in
-        b >>= put_negative_vle_rec sv (n+1)
-      end
-    else
-      IOBuf.put_char (to_char 1L) buf
+  let rec put_positive_vle_rec v ?size buf =
+    match size, v with
+    | Some(0), _ -> fail (`OutOfRange (`Msg "encode_vle"))
+    | None, v when v <= Vle.byte_mask -> IOBuf.put_char (to_char v) buf
+    | Some(1), v when v <= Vle.byte_mask -> IOBuf.put_char (to_char v) buf
+    | _, v ->
+      let mv = Int64.logor Vle.more_bytes_flag @@ Int64.logand v Vle.byte_mask in
+      let b = IOBuf.put_char (to_char mv) buf in
+      let sv = Int64.shift_right v Vle.shift_len in
+      let size = Option.map size (fun s -> s-1) in
+      b >>= put_positive_vle_rec sv ?size
   in
-    let rec put_positive_vle_rec v buf =
-      if v <= Vle.byte_mask then IOBuf.put_char (to_char v) buf
-      else
-        begin
-          let mv = Int64.logor Vle.more_bytes_flag @@ Int64.logand v Vle.byte_mask in
-          let b = IOBuf.put_char (to_char mv) buf in
-          let sv = Int64.shift_right v Vle.shift_len in
-          b >>= put_positive_vle_rec sv
-        end
-  in
-    if v < 0L then put_negative_vle_rec v 1 buf
-    else put_positive_vle_rec v buf
+  if v < 0L then fail (`OutOfBounds (`Msg "encode_vle"))
+  else put_positive_vle_rec v ?size buf
 
 let decode_vle buf =
   let from_char c = Vle.of_int (int_of_char c) in
