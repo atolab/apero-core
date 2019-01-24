@@ -20,20 +20,20 @@ open Result
 open Result.Infix
 let encode_vle ?size v buf =
   let to_char l = char_of_int @@ Int64.to_int l in
-  let rec put_positive_vle_rec v ?size buf =
-    match size, v with
-    | Some(0), _ -> fail (`OutOfRange (`Msg "encode_vle"))
-    | None, v when v <= Vle.byte_mask -> IOBuf.put_char (to_char v) buf
-    | Some(1), v when v <= Vle.byte_mask -> IOBuf.put_char (to_char v) buf
-    | _, v ->
-      let mv = Int64.logor Vle.more_bytes_flag @@ Int64.logand v Vle.byte_mask in
+  let rec put_positive_vle_rec v' ?size' buf =
+    match size', v' with
+    | Some(0), _ -> fail (`OutOfBounds (`Msg (Printf.sprintf "encode_vle: cannot encode %Ld as a %d bytes VLE" v (Option.get size))))
+    | None, v' when v' <= Vle.byte_mask -> IOBuf.put_char (to_char v') buf
+    | Some(1), v' when v' <= Vle.byte_mask -> IOBuf.put_char (to_char v') buf
+    | _, v' ->
+      let mv = Int64.logor Vle.more_bytes_flag @@ Int64.logand v' Vle.byte_mask in
       let b = IOBuf.put_char (to_char mv) buf in
-      let sv = Int64.shift_right v Vle.shift_len in
-      let size = Option.map size (fun s -> s-1) in
-      b >>= put_positive_vle_rec sv ?size
+      let sv = Int64.shift_right v' Vle.shift_len in
+      let size' = Option.map size' (fun s -> s-1) in
+      b >>= put_positive_vle_rec sv ?size'
   in
-  if v < 0L then fail (`OutOfBounds (`Msg "encode_vle"))
-  else put_positive_vle_rec v ?size buf
+  if v < 0L then fail (`OutOfRange (`Msg "encode_vle: integer to encode must be positive"))
+  else put_positive_vle_rec v ?size':size buf
 
 let decode_vle buf =
   let from_char c = Vle.of_int (int_of_char c) in

@@ -83,6 +83,11 @@ let test_encoding () =
   check_if true  __LINE__ @@ test_with_size 0x10000L 7;
   check_if true  __LINE__ @@ test_with_size Int64.max_int 9;
 
+  check_if false  __LINE__ @@ test_with_size 0L 0;
+  check_if false  __LINE__ @@ test_with_size 0x80L 1;
+  check_if false  __LINE__ @@ test_with_size 0x7FFFL 2;
+  check_if false  __LINE__ @@ test_with_size Int64.max_int 2;
+
   ()
 
 let all_tests = [
