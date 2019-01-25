@@ -47,7 +47,6 @@ let decode_vle buf =
           if (from_char c) <= Vle.byte_mask then  return ((merge v (masked_from_char c) n), buf)
           else decode_vle_rec (merge v (masked_from_char c) n) (n+1) buf
         )        
-        
       end
     else
       begin
@@ -105,7 +104,7 @@ let decode_seq read buf  =
     (get_remaining  [] (Vle.to_int length) buf))
 
 let encode_seq write seq buf =
-  let rec put_remaining seq  buf =
+  let rec put_remaining seq buf =
     match seq with
     | [] -> return buf
     | head :: rem -> 
@@ -115,7 +114,25 @@ let encode_seq write seq buf =
     (encode_vle (Vle.of_int (List.length seq)) buf)
     >>= put_remaining seq
 
-
+let encode_seq_safe write seq buf =
+  let rec put_remaining seq n buf =
+    if (n = 0x3FFF) then
+      (* note: 0x3FFF is the biggest length we can encode in a 2-bytes vle *)
+      (buf, n, seq)
+    else match seq with
+    | [] -> (buf, n, [])
+    | head :: rem ->
+      let buf = IOBuf.mark buf in
+      match write head buf with
+      | Ok buf -> put_remaining rem (n+1) buf
+      | Error _ -> (IOBuf.reset buf, n, seq)
+  in
+  (* reserve space for seq length as a 2-bytes vle *)
+  let length_pos = IOBuf.position buf in
+  (encode_vle ~size:2 0L buf)
+  >>> put_remaining seq 0
+  >>= fun (buf, n, remain) -> IOBuf.overwrite_at length_pos (encode_vle ~size:2 (Vle.of_int n)) buf
+  >>> fun buf -> (buf, remain)
 
 let read1_spec log p1 c buf =    
   log ;
