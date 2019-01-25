@@ -177,4 +177,9 @@ module IOBuf = struct
       end 
     else 
       fail (`OutOfBounds (`Msg "IOBuf.get_string"))
+
+  let overwrite_at pos (f:t -> (t, Atypes.error) result) buf = 
+    let init_pos = position buf in
+    set_position pos buf >>= f >>= set_position init_pos
+
 end

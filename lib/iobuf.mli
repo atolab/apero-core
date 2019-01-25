@@ -31,7 +31,8 @@ module IOBuf : sig
       The capacity for the IOBuf will be set to the buffer length. *)
 
   val flip : t -> t 
-  (** [flip] sets the limit to the current position and the position to zero. *)
+  (** [flip] sets the limit to the current position and the position to zero.
+      This function is typically used after writing in a buffer, to make it ready for reading. *)
 
   val clear : t -> t
   (** [clear] sets the position to zero and the limit to the capacity. *)
@@ -59,7 +60,7 @@ module IOBuf : sig
   val put_char : char -> t ->  (t, error) result 
   val get_char : t -> ((char * t), error) result 
 
-  val blit_from_bytes : Lwt_bytes.t -> int -> int ->  t -> (t, error) result 
+  val blit_from_bytes : Lwt_bytes.t -> int -> int ->  t -> (t, error) result
 
   val blit_to_bytes : int -> t ->  ((Lwt_bytes.t * t), error) result 
 
@@ -70,6 +71,10 @@ module IOBuf : sig
   val put_buf : t -> t -> (t, error) result 
 
   val get_buf : int -> t -> (t*t, error) result 
+
+  val overwrite_at : int -> (t -> (t, error) result) -> t -> (t, error) result
+  (** [overwrite_at pos f buf] temporary set the position of [buf] to [pos],
+      applies [f] to [buf] and then reset its position to the initial value *)
 
   val hexdump : ?separator:string -> t -> string
 
