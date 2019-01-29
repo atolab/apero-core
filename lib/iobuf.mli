@@ -21,13 +21,13 @@ module IOBuf : sig
   val create : ?grow:int -> int -> t
   (** [create] allocates a new IOBuf  of the given capacity. *)
 
-  val to_bytes : t -> Lwt_bytes.t
+  val to_bytes : t -> Bigstringaf.t
   (** [to_bytes] provides the [Lwt_bytes.t] representation for this buffer so that
       it can be used for I/O such as sockets, etc... This buffer should be
       considered as read-only. *)
 
-  val from_bytes : ?grow:int -> Lwt_bytes.t -> t 
-  (** [from_bytes] creates an IOBuf by wrapping the provided [Lwt_bytes.t].
+  val from_bytes : ?grow:int -> Bigstringaf.t -> t
+  (** [from_bytes] creates an IOBuf by wrapping the provided [Bigstringaf.t].
       The capacity for the IOBuf will be set to the buffer length. *)
 
   val flip : t -> t 
@@ -60,9 +60,9 @@ module IOBuf : sig
   val put_char : char -> t ->  (t, error) result 
   val get_char : t -> ((char * t), error) result 
 
-  val blit_from_bytes : Lwt_bytes.t -> int -> int ->  t -> (t, error) result
+  val blit_from_bytes : Bigstringaf.t -> int -> int ->  t -> (t, error) result
 
-  val blit_to_bytes : int -> t ->  ((Lwt_bytes.t * t), error) result 
+  val blit_to_bytes : int -> t ->  ((Bigstringaf.t * t), error) result
 
   val put_string : string -> t -> (t, error) result 
   
