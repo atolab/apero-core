@@ -90,6 +90,17 @@ let test_encoding () =
 
   ()
 
+let test_yojson () = 
+   check_if true  __LINE__ @@ (9L |> Vle.to_yojson |> Vle.of_yojson |> Result.get = 9L);
+   check_if true  __LINE__ @@ (9L |> Vle.to_yojson |> Yojson.Safe.to_string |> Yojson.Safe.from_string |> Vle.of_yojson |> Result.get = 9L);
+   check_if true  __LINE__ @@ (987654321987654321L |> Vle.to_yojson |> Vle.of_yojson |> Result.get = 987654321987654321L);
+   check_if true  __LINE__ @@ (987654321987654321L |> Vle.to_yojson |> Yojson.Safe.to_string |> Yojson.Safe.from_string |> Vle.of_yojson |> Result.get = 987654321987654321L);
+   check_if true  __LINE__ @@ ((`Int 12) |> Vle.of_yojson |> Result.get = 12L);
+   check_if true  __LINE__ @@ ((`Intlit "987654321987654321") |> Vle.of_yojson |> Result.get = 987654321987654321L);
+   check_if true  __LINE__ @@ ("987654321987654321" |> Yojson.Safe.from_string |> Vle.of_yojson |> Result.get = 987654321987654321L);
+   ()
+
 let all_tests = [
   "VLE encoding", `Quick, test_encoding;
+  "VLE yojson" , `Quick, test_yojson;
 ]

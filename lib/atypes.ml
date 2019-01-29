@@ -1,4 +1,4 @@
-type error_kind = [`NoMsg | `Msg of string | `Code of int | `Pos of (string * int * int * int) | `Loc of string] [@@deriving show]
+type error_kind = [`NoMsg | `Msg of string | `Code of int | `Pos of (string * int * int * int) | `Loc of string] [@@deriving show, yojson]
   
 type error = [
   | `OutOfBounds of error_kind
@@ -17,16 +17,22 @@ type error = [
   | `UnexpextedMessage
   | `ValidationError of error_kind
   | `ErrorStack of error list ]
-  [@@deriving show]
+  [@@deriving show, yojson]
 
 
 (* exception Exception of error [@@deriving show] *)
-exception Exception of error [@@deriving show]
+exception Exception of error [@@deriving show, yojson]
 
 let () = Printexc.register_printer @@ function | Exception(e) -> Some ("Atypes.Exception: "^(show_error e)) | _ -> None
 
 module Vle = struct
   include Int64
+  
+  type intsixtyfour = int64  [@@deriving yojson]
+
+  let of_yojson = intsixtyfour_of_yojson
+
+  let to_yojson = intsixtyfour_to_yojson
 
   let of_char =
     let open Acommon.Infix in
