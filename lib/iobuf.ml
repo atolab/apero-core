@@ -7,7 +7,7 @@ module IOBuf = struct
   module Id = NumId.Make(Int64)
 
   type t = 
-    { buffer : Lwt_bytes.t
+    { buffer : Bigstringaf.t
     ; pos: int
     ; limit : int
     ; capacity: int
@@ -23,25 +23,25 @@ module IOBuf = struct
   let hexdump ?separator:(sep="") buf =
     let rec hexdump buf idx =
       if idx < buf.limit then 
-        (Printf.sprintf "%02x%s" (int_of_char @@ Lwt_bytes.get buf.buffer idx) sep ) ^ (hexdump buf (idx+1)) 
+        (Printf.sprintf "%02x%s" (int_of_char @@ Bigstringaf.get buf.buffer idx) sep ) ^ (hexdump buf (idx+1))
       else "" in 
     hexdump buf 0
     
   let to_string buf =
     "(pos: " ^ (string_of_int buf.pos) ^ ", limit: "^ (string_of_int buf.limit) ^ " content: " ^ (hexdump buf ~separator:":")
 
-  let create ?(grow=0) len =  
-    { buffer = Lwt_bytes.create len;  pos = 0; limit = len; capacity = len; mark = 0; id = Id.next_id (); grow }
+  let create ?(grow=0) len = 
+    { buffer = Bigstringaf.create len;  pos = 0; limit = len; capacity = len; mark = 0; id = Id.next_id (); grow }
 
   let to_bytes buf = buf.buffer
 
   let from_bytes ?(grow=0) bs =
-    let len = Lwt_bytes.length bs in
+    let len = Bigstringaf.length bs in
     { buffer = bs; pos =  0; limit = len; capacity = len; mark = 0; id = Id.next_id (); grow }
 
   let expand_buf orig n = 
     let nbuf = create ~grow:n (n + orig.capacity) in 
-    Lwt_bytes.blit orig.buffer 0 nbuf.buffer 0 orig.limit;
+    Bigstringaf.blit orig.buffer ~src_off:0 nbuf.buffer ~dst_off:0 ~len:orig.limit;
     {nbuf with pos = orig.pos; limit = nbuf.capacity}
   
   let flip buf = { buf with limit = buf.pos; pos = 0 }
@@ -82,7 +82,7 @@ module IOBuf = struct
   let rec put_char c buf = 
     if buf.pos < buf.limit then
       begin
-        Lwt_bytes.set buf.buffer buf.pos c
+        Bigstringaf.set buf.buffer buf.pos c
       ; return { buf with pos = buf.pos + 1}
       end
     else
@@ -95,7 +95,7 @@ module IOBuf = struct
   let get_char buf =
     if buf.pos < buf.limit then
       begin
-        let c = Lwt_bytes.get buf.buffer buf.pos in
+        let c = Bigstringaf.get buf.buffer buf.pos in
         return (c, {buf with pos = buf.pos+1})
       end
     else 
@@ -104,7 +104,7 @@ module IOBuf = struct
   let rec blit_from_bytes bs ofs len  buf =
     if buf.pos + len < buf.limit then
       begin
-        Lwt_bytes.blit bs ofs buf.buffer buf.pos len
+        Bigstringaf.blit bs ~src_off:ofs buf.buffer ~dst_off:buf.pos ~len
       ; return { buf with pos = buf.pos + len }
       end
     else
@@ -116,8 +116,8 @@ module IOBuf = struct
   let blit_to_bytes n buf = 
     if n <= available buf then 
       begin 
-        let bs = Lwt_bytes.create n in         
-        Lwt_bytes.blit buf.buffer (position buf) bs 0 n 
+        let bs = Bigstringaf.create n in
+        Bigstringaf.blit buf.buffer ~src_off:(position buf) bs ~dst_off:0 ~len:n
         ; return (bs, { buf with pos = buf.pos + n })
       end
     else 
@@ -131,7 +131,7 @@ module IOBuf = struct
     let len = src.limit - src.pos in
     if  len <= (available buf) then
       begin
-        Lwt_bytes.blit src.buffer src.pos buf.buffer buf.pos len ;
+        Bigstringaf.blit src.buffer ~src_off:src.pos buf.buffer ~dst_off:buf.pos ~len ;
         return { buf with pos = buf.pos + len}
       end
     else
@@ -145,7 +145,7 @@ module IOBuf = struct
   let get_buf len buf = 
     if len <= available buf then 
       let dst = create len in 
-      Lwt_bytes.blit buf.buffer buf.pos dst.buffer 0 len ;
+      Bigstringaf.blit buf.buffer ~src_off:buf.pos dst.buffer ~dst_off:0 ~len ;
       return (dst, {buf with pos = buf.pos + len})
     else 
       fail (`OutOfBounds (`Msg "IOBuf.get_buf"))
@@ -157,7 +157,7 @@ module IOBuf = struct
     let len = String.length s in
     if len <= available buf then
       begin
-        Lwt_bytes.blit_from_bytes (Bytes.of_string s) 0 buf.buffer buf.pos len;
+        Bigstringaf.blit_from_bytes (Bytes.of_string s) ~src_off:0 buf.buffer ~dst_off:buf.pos ~len;
         return { buf with pos = buf.pos + len }
       end 
     else 
@@ -171,7 +171,7 @@ module IOBuf = struct
     if len <= available buf then
       begin
         let s = Bytes.create len in
-        Lwt_bytes.blit_to_bytes buf.buffer buf.pos s 0 len;
+        Bigstringaf.blit_to_bytes buf.buffer ~src_off:buf.pos s ~dst_off:0 ~len;
         return (Bytes.to_string s, { buf with pos = buf.pos + len })
       end 
     else 
