@@ -291,7 +291,7 @@ let rec set_buf src ~at buf =
       let len = readable_bytes src in
       if at + len <= capacity buf then
         begin
-          Bigstringaf.blit src.buffer ~src_off:(buf.offset + src.r_pos) buf.buffer ~dst_off:(buf.offset + at) ~len;
+          Bigstringaf.blit src.buffer ~src_off:(src.offset + src.r_pos) buf.buffer ~dst_off:(buf.offset + at) ~len;
           return buf
         end
       else
