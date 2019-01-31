@@ -79,7 +79,7 @@ let skip n buf = set_w_pos (buf.r_pos + n) buf |> function
   | Error _ ->  fail (`OutOfBounds (`Msg (Printf.sprintf "A_buf.skip %d" n)))
 
 
-let rec copy_from ~src ~src_idx ~dst ~dst_idx ~len = 
+let rec blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
   if src_idx >= 0 && len >= 0 && src_idx + len <= Bigstringaf.length src && dst_idx >= 0 then 
     begin
       if dst_idx + len <= capacity dst then
@@ -89,11 +89,11 @@ let rec copy_from ~src ~src_idx ~dst ~dst_idx ~len =
       else
         match dst.grow with 
         | 0 -> fail (`OutOfBounds (`Msg "IOBuf.copy_from"))
-        | n -> copy_from ~src ~src_idx ~dst:(expand n dst) ~dst_idx ~len
+        | n -> blit_from_bytes ~src ~src_idx ~dst:(expand n dst) ~dst_idx ~len
     end
   else fail (`OutOfBounds (`Msg "IOBuf.copy_from"))
   
-let copy_to ~src ~src_idx ~dst ~dst_idx ~len = 
+let blit_to_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
   if src_idx >= 0 && len >= 0 && src_idx + len <= src.w_pos then
     begin
       return (Bigstringaf.blit src.buffer ~src_off:src_idx dst ~dst_off:dst_idx ~len)
