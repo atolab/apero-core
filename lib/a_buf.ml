@@ -74,7 +74,7 @@ let writable_bytes buf = (capacity buf) - (w_pos buf)
 let writable buf = writable_bytes buf > 0
 
 
-let skip n buf = set_w_pos (buf.r_pos + n) buf |> function
+let skip n buf = set_r_pos (buf.r_pos + n) buf |> function
   | Ok buf -> return buf
   | Error _ ->  fail (`OutOfBounds (`Msg (Printf.sprintf "A_buf.skip %d" n)))
 
