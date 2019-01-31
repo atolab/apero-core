@@ -6,6 +6,8 @@ module Id = NumId.Make(Int64)
 type t = { 
   id : Id.t;
   buffer : Bigstringaf.t;
+  offset : int; 
+  capacity : int;
   r_pos : int;
   w_pos : int;
   r_mark : int;
@@ -22,16 +24,35 @@ let from_bytes ?(grow=0) bs =
   { 
     id = Id.next_id ();
     buffer = bs;
+    offset = 0;
+    capacity = Bigstringaf.length bs;
     r_pos = 0;
     w_pos = 0;
     r_mark = 0;
     w_mark = 0;
-    grow 
+    grow;
   }
 
 let create ?(grow=0) len = from_bytes ~grow (Bigstringaf.create len)
 
-let capacity buf = Bigstringaf.length buf.buffer
+let slice from len buf = 
+  if from > 0 && len > 0 && (from + len) <= buf.capacity
+  then return 
+    { 
+      id = Id.next_id ();
+      buffer = buf.buffer;
+      offset = buf.offset + from;
+      capacity = len;
+      r_pos = 0;
+      w_pos = 0;
+      r_mark = 0;
+      w_mark = 0;
+      grow = 0;
+    }
+  else fail (`OutOfBounds (`Msg (
+    Printf.sprintf "A_buf.slice")))
+
+let capacity buf = buf.capacity
 
 let clear buf = {buf with r_pos = 0; w_pos = 0;}
 
@@ -84,7 +105,7 @@ let rec blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len =
     begin
       if dst_idx + len <= capacity dst then
         begin
-          return (Bigstringaf.blit src ~src_off:src_idx dst.buffer ~dst_off:dst_idx ~len)
+          return (Bigstringaf.blit src ~src_off:src_idx dst.buffer ~dst_off:(dst.offset + dst_idx) ~len)
         end
       else
         match dst.grow with 
@@ -96,7 +117,7 @@ let rec blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len =
 let blit_to_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
   if src_idx >= 0 && len >= 0 && src_idx + len <= src.w_pos then
     begin
-      return (Bigstringaf.blit src.buffer ~src_off:src_idx dst ~dst_off:dst_idx ~len)
+      return (Bigstringaf.blit src.buffer ~src_off:(src.offset + src_idx) dst ~dst_off:dst_idx ~len)
     end
   else 
     fail (`OutOfBounds (`Msg "A_buf.blit_to_bytes"))
@@ -105,7 +126,7 @@ let blit_to_bytes ~src ~src_idx ~dst ~dst_idx ~len =
 let read_char buf =
   if readable buf then
     begin
-      let c = Bigstringaf.get buf.buffer buf.r_pos in
+      let c = Bigstringaf.get buf.buffer (buf.offset + buf.r_pos) in
       return (c, {buf with r_pos = buf.r_pos+1})
     end
   else 
@@ -115,7 +136,7 @@ let read_chars len buf =
   if len >= 0 && len <= readable_bytes buf then
     begin
       let s = Bytes.create len in
-      Bigstringaf.blit_to_bytes buf.buffer ~src_off:buf.r_pos s ~dst_off:0 ~len;
+      Bigstringaf.blit_to_bytes buf.buffer ~src_off:(buf.offset + buf.r_pos) s ~dst_off:0 ~len;
       return (Bytes.to_string s, {buf with r_pos = buf.r_pos + len})
     end 
   else 
@@ -125,7 +146,7 @@ let read_bytes len buf =
   if len >= 0 && len <= readable_bytes buf then
     begin
       let dst = Bigstringaf.create len in
-      Bigstringaf.blit buf.buffer ~src_off:buf.r_pos dst ~dst_off:0 ~len ;
+      Bigstringaf.blit buf.buffer ~src_off:(buf.offset + buf.r_pos) dst ~dst_off:0 ~len ;
       return (dst, {buf with r_pos = buf.r_pos + len})
     end
   else 
@@ -139,7 +160,7 @@ let read_buf len buf = read_bytes len buf |> function
 let get_char ~at buf =
   if at >= 0 && at + 1 <= buf.w_pos then
     begin
-      return (Bigstringaf.get buf.buffer at)
+      return (Bigstringaf.get buf.buffer (buf.offset + at))
     end
   else 
     fail (`OutOfBounds (`Msg "A_buf.get_char"))
@@ -148,7 +169,7 @@ let get_chars ~at len buf =
   if at >= 0 && len >= 0 && at + len <= buf.w_pos then
     begin
       let s = Bytes.create len in
-      Bigstringaf.blit_to_bytes buf.buffer ~src_off:at s ~dst_off:0 ~len;
+      Bigstringaf.blit_to_bytes buf.buffer ~src_off:(buf.offset + at) s ~dst_off:0 ~len;
       return (Bytes.to_string s)
     end 
   else 
@@ -158,7 +179,7 @@ let get_bytes ~at len buf =
   if at >= 0 && len >= 0 && at + len <= buf.w_pos then
     begin
       let dst = Bigstringaf.create len in 
-      Bigstringaf.blit buf.buffer ~src_off:at dst ~dst_off:0 ~len ;
+      Bigstringaf.blit buf.buffer ~src_off:(buf.offset + at) dst ~dst_off:0 ~len ;
       return dst
     end
   else 
@@ -172,7 +193,7 @@ let get_buf ~at len buf = get_bytes ~at len buf |> function
 let rec write_char c buf = 
   if writable buf then
     begin
-      Bigstringaf.set buf.buffer buf.w_pos c;
+      Bigstringaf.set buf.buffer (buf.offset + buf.w_pos) c;
       return { buf with w_pos = buf.w_pos + 1}
     end
   else
@@ -184,7 +205,7 @@ let rec write_chars s buf =
   let len = String.length s in
   if len <= writable_bytes buf then
     begin
-      Bigstringaf.blit_from_bytes (Bytes.of_string s) ~src_off:0 buf.buffer ~dst_off:buf.w_pos ~len;
+      Bigstringaf.blit_from_bytes (Bytes.of_string s) ~src_off:0 buf.buffer ~dst_off:(buf.offset + buf.w_pos) ~len;
       return {buf with w_pos = buf.w_pos + len}
     end 
   else 
@@ -196,7 +217,7 @@ let rec write_bytes src buf  =
   let len = Bigstringaf.length src in
   if len <= writable_bytes buf then
     begin
-      Bigstringaf.blit src ~src_off:0 buf.buffer ~dst_off:buf.w_pos ~len ;
+      Bigstringaf.blit src ~src_off:0 buf.buffer ~dst_off:(buf.offset + buf.w_pos) ~len ;
       return {buf with w_pos = buf.w_pos + len}
     end
   else
@@ -208,7 +229,7 @@ let rec write_buf src buf  =
   let len = readable_bytes src in
   if len <= writable_bytes buf then
     begin
-      Bigstringaf.blit src.buffer ~src_off:src.r_pos buf.buffer ~dst_off:buf.w_pos ~len ;
+      Bigstringaf.blit src.buffer ~src_off:(src.offset + src.r_pos) buf.buffer ~dst_off:(buf.offset + buf.w_pos) ~len ;
       return {buf with w_pos = buf.w_pos + len}
     end
   else
@@ -222,7 +243,7 @@ let rec set_char c ~at buf =
     begin
       if at + 1 <= capacity buf then
         begin
-          Bigstringaf.set buf.buffer at c;
+          Bigstringaf.set buf.buffer (buf.offset + at) c;
           return buf
         end
       else
@@ -238,7 +259,7 @@ let rec set_chars s ~at buf =
       let len = String.length s in
       if at + len <= capacity buf then
         begin
-          Bigstringaf.blit_from_bytes (Bytes.of_string s) ~src_off:0 buf.buffer ~dst_off:at ~len;
+          Bigstringaf.blit_from_bytes (Bytes.of_string s) ~src_off:0 buf.buffer ~dst_off:(buf.offset + at) ~len;
           return buf
         end
       else
@@ -254,7 +275,7 @@ let rec set_bytes src ~at buf =
       let len = Bigstringaf.length src in
       if at + len <= capacity buf then
         begin
-          Bigstringaf.blit src ~src_off:0 buf.buffer ~dst_off:at ~len;
+          Bigstringaf.blit src ~src_off:0 buf.buffer ~dst_off:(buf.offset + at) ~len;
           return buf
         end
       else
@@ -270,7 +291,7 @@ let rec set_buf src ~at buf =
       let len = readable_bytes src in
       if at + len <= capacity buf then
         begin
-          Bigstringaf.blit src.buffer ~src_off:src.r_pos buf.buffer ~dst_off:at ~len;
+          Bigstringaf.blit src.buffer ~src_off:(buf.offset + src.r_pos) buf.buffer ~dst_off:(buf.offset + at) ~len;
           return buf
         end
       else
@@ -284,7 +305,7 @@ let rec set_buf src ~at buf =
 let hexdump ?separator:(sep="") buf =
   let rec hexdump buf idx =
     if idx < buf.w_pos then 
-    (Printf.sprintf "%02x%s" (int_of_char @@ Bigstringaf.get buf.buffer idx) sep ) ^ (hexdump buf (idx+1))
+    (Printf.sprintf "%02x%s" (int_of_char @@ Bigstringaf.get buf.buffer (buf.offset + idx)) sep ) ^ (hexdump buf (idx+1))
     else "" in 
   hexdump buf 0
     
