@@ -238,7 +238,7 @@ let rec set_chars s ~at buf =
       let len = String.length s in
       if at + len <= capacity buf then
         begin
-          Bigstringaf.blit_from_bytes (Bytes.of_string s) ~src_off:0 buf.buffer ~dst_off:buf.w_pos ~len;
+          Bigstringaf.blit_from_bytes (Bytes.of_string s) ~src_off:0 buf.buffer ~dst_off:at ~len;
           return buf
         end
       else
@@ -254,7 +254,7 @@ let rec set_bytes src ~at buf =
       let len = Bigstringaf.length src in
       if at + len <= capacity buf then
         begin
-          Bigstringaf.blit src ~src_off:0 buf.buffer ~dst_off:buf.w_pos ~len;
+          Bigstringaf.blit src ~src_off:0 buf.buffer ~dst_off:at ~len;
           return buf
         end
       else
@@ -270,7 +270,7 @@ let rec set_buf src ~at buf =
       let len = readable_bytes src in
       if at + len <= capacity buf then
         begin
-          Bigstringaf.blit src.buffer ~src_off:src.r_pos buf.buffer ~dst_off:buf.w_pos ~len;
+          Bigstringaf.blit src.buffer ~src_off:src.r_pos buf.buffer ~dst_off:at ~len;
           return buf
         end
       else
