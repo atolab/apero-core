@@ -5,11 +5,19 @@ type t
 include Ordered.Comparable with type t := t
 
 val create : ?grow:int -> int -> t
-(** [create c] allocates a new IOBuf of capacity [c]. *)
+(** [create c] allocates a new A_buf of capacity [c]. *)
 
 val from_bytes : ?grow:int -> Bigstringaf.t -> t 
 (** [from_bytes bs] creates an A_buf by wrapping [bs].
     The capacity for the A_buf will be set to the length of [bs]. *)
+
+val slice : int -> int -> t -> (t, error) result 
+(** [slice from len buf] creates an A_buf that wraps the subregion 
+    of buffer [buf] of length [len] starting at index [from]. 
+    This operation involves NO COPY. Modifications on the resulting 
+    buffer will modify the original [buf] and reverse. 
+    The resulting buffer is not expandable. It's reader position and 
+    writer position are set to 0. *)
 
 val capacity : t -> int
 (** [capacity buf] returns the number of bytes (octets) the buffer 
