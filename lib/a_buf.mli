@@ -16,70 +16,70 @@ val capacity : t -> int
     [buf] can contain. *)
 
 val clear : t -> t
-(** [clear buf] sets the reader_index and writer_index of [buf] to 0. *)
+(** [clear buf] sets the reader position and writer position of [buf] to 0. *)
 
-val reader_index : t -> int
-(** [reader_index buf] returns the reader_index of [buf]. *)
+val r_pos : t -> int
+(** [r_pos buf] returns the reader position of [buf]. *)
 
-val set_reader_index : int -> t -> (t, error) result 
-(** [set_reader_index i buf] sets the reader_index of [buf] to [i]. *)
+val set_r_pos : int -> t -> (t, error) result 
+(** [set_r_pos p buf] sets the reader position of [buf] to [r]. *)
 
-val mark_reader_index : t -> t
-(** [mark_reader_index buf] marks the current reader_index in the buffer [buf]. *)
+val mark_r_pos : t -> t
+(** [mark_r_pos buf] marks the current reader position in the buffer [buf]. *)
 
-val reset_reader_index : t -> t
-(** [reset_reader_index buf] resets the reader_index of [buf] to the marked reader_index. 
-    The marked reader_index is initially set to 0. *)
+val reset_r_pos : t -> t
+(** [reset_r_pos buf] resets the reader position of [buf] to the marked position. 
+    The marked reader position is initially set to 0. *)
 
-val writer_index : t -> int
-(** [writer_index buf] returns the writer_index of [buf]. *)
+val w_pos : t -> int
+(** [w_pos buf] returns the writer position of [buf]. *)
 
-val set_writer_index : int -> t -> (t, error) result 
-(** [set_writer_index i buf] sets the writer_index of [buf] to [i]. *)
+val set_w_pos : int -> t -> (t, error) result 
+(** [set_w_pos p buf] sets the writer position of [buf] to [p]. *)
 
-val mark_writer_index : t -> t
-(** [mark_writer_index buf] marks the current writer_index in the buffer [buf]. *)
+val mark_w_pos : t -> t
+(** [mark_w_pos buf] marks the current writer position in the buffer [buf]. *)
 
-val reset_writer_index : t -> t
-(** [reset_writer_index buf] resets the writer_index of [buf] to the marked writer_index. 
-    The marked writer_index is initially set to 0. *)
+val reset_w_pos : t -> t
+(** [reset_w_pos buf] resets the writer position of [buf] to the marked position. 
+    The marked writer position is initially set to 0. *)
 
 val readable : t -> bool
 (** [readable buf] returns true if and only if 
-    ((writer_index [buf]) - (reader_index [buf])) is greater than 0. *)
+    ((w_pos [buf]) - (r_pos [buf])) is greater than 0. *)
 
 val readable_bytes : t -> int
 (** [readable_bytes buf] returns the number of readable bytes of [buf] 
-    which is equal to ((writer_index [buf]) - (reader_index [buf])). *)
+    which is equal to ((w_pos [buf]) - (r_pos [buf])). *)
 
 val writable : t -> bool
-(** [readable buf] returns true if and only if 
-    ((capacity [buf]) - (writer_index [buf])) is greater than 0. *)
+(** [writable buf] returns true if and only if 
+    ((capacity [buf]) - (w_pos [buf])) is greater than 0. *)
 
 val writable_bytes : t -> int
 (** [writable_bytes buf] returns the number of writable bytes of [buf] 
-    which is equal to ((capacity [buf]) - (writer_index [buf])). *)
+    which is equal to ((capacity [buf]) - (w_pos [buf])). *)
 
 
 val skip : int -> t -> (t, error) result
-(** [skip n buf] increases the reader_index of [buf] of [n]. *)
+(** [skip n buf] increases the reader position by [n] in [buf]. *)
 
 
 val read_char : t -> ((char * t), error) result 
-(** [read_char buf] gets a char from [buf] at reader_index and 
-    increases the reader_index by 1 in [buf]. *)
+(** [read_char buf] gets a char from [buf] at reader position and 
+    increases the reader position by 1 in [buf]. *)
 
 val read_chars : int -> t -> ((string * t), error) result 
-(** [read_chars n buf] gets [n] chars from [buf] at reader_index and 
-    increases the reader_index by [n] in [buf]. *)
+(** [read_chars n buf] gets [n] chars from [buf] at reader position and 
+    increases the reader position by [n] in [buf]. *)
 
 val read_bytes : int -> t -> (Bigstringaf.t * t, error) result 
-(** [read_bytes n buf] gets [n] bytes from [buf] at reader_index and 
-    increases the reader_index by [n] in [buf]. *)
+(** [read_bytes n buf] gets [n] bytes from [buf] at reader position and 
+    increases the reader position by [n] in [buf]. *)
 
 val read_buf : int -> t -> (t * t, error) result 
-(** [read_bytes n buf] gets [n] bytes from [buf] at reader_index and 
-    increases the reader_index by [n] in [buf]. *)
+(** [read_bytes n buf] gets [n] bytes from [buf] at reader position and 
+    increases the reader position by [n] in [buf]. *)
 
 
 val get_char : at:int -> t -> (char, error) result 
@@ -96,20 +96,20 @@ val get_buf : at:int -> int -> t -> (t, error) result
 
 
 val write_char : char -> t -> (t, error) result 
-(** [write_char c buf] sets the character [c] in [buf] at writer_index and 
-    increases the writer_index by 1 in [buf]. *)
+(** [write_char c buf] sets the character [c] in [buf] at writer position and 
+    increases the writer position by 1 in [buf]. *)
 
 val write_chars : string -> t -> (t, error) result 
-(** [write_chars s buf] sets the characters [s] in [buf] at writer_index and 
-    increases the writer_index by (length [s]) in [buf]. *)
+(** [write_chars s buf] sets the characters [s] in [buf] at writer position and 
+    increases the writer position by (length [s]) in [buf]. *)
 
 val write_bytes : Bigstringaf.t -> t -> (t, error) result 
-(** [write_bytes bs buf] sets the bytes [bs] in [buf] at writer_index and 
-    increases the writer_index by (length [bs]) in [buf]. *)
+(** [write_bytes bs buf] sets the bytes [bs] in [buf] at writer position and 
+    increases the writer position by (length [bs]) in [buf]. *)
 
 val write_buf : t -> t -> (t, error) result 
-(** [write_buf bs buf] sets the bytes [bs] in [buf] at writer_index and 
-    increases the writer_index by (readable_bytes [bs]) in [buf]. *)
+(** [write_buf bs buf] sets the bytes [bs] in [buf] at writer position and 
+    increases the writer position by (readable_bytes [bs]) in [buf]. *)
 
 
 val set_char : char -> at:int -> t -> (t, error) result 
@@ -136,6 +136,6 @@ val copy_to : src:t -> src_idx:int -> dst:Bigstringaf.t -> dst_idx:int -> len:in
 
 val hexdump : ?separator:string -> t -> string
 (** [hexdump buf] returns an hexadecimal representation of the bytes 
-    in buffer [buf] from index 0 to writer_index. *)
+    in buffer [buf] from index 0 to writer position. *)
 
 val to_string : t -> string
