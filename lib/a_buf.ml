@@ -29,7 +29,7 @@ let from_bigstring ?(grow=0) bs =
     offset = 0;
     capacity = Bigstringaf.length bs;
     r_pos = 0;
-    w_pos = 0;
+    w_pos = Bigstringaf.length bs;
     r_mark = 0;
     w_mark = 0;
     grow;
@@ -41,7 +41,18 @@ let from_bytes ?(grow=0) bs =
   Bigstringaf.blit_from_bytes bs ~src_off:0 bigs ~dst_off:0 ~len;
   from_bigstring ~grow bigs
 
-let create ?(grow=0) len = from_bigstring ~grow (Bigstringaf.create len)
+let create ?(grow=0) len =
+  { 
+    id = Id.next_id ();
+    buffer = Bigstringaf.create len;
+    offset = 0;
+    capacity = len;
+    r_pos = 0;
+    w_pos = 0;
+    r_mark = 0;
+    w_mark = 0;
+    grow;
+  }
 
 let slice from len buf = 
   if from > 0 && len > 0 && (from + len) <= buf.capacity
