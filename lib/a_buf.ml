@@ -143,9 +143,9 @@ let read_byte buf =
 let read_bytes len buf = 
   if len >= 0 && len <= readable_bytes buf then
     begin
-      let s = Bytes.create len in
-      Bigstringaf.blit_to_bytes buf.buffer ~src_off:(buf.offset + buf.r_pos) s ~dst_off:0 ~len;
-      return (s, {buf with r_pos = buf.r_pos + len})
+      let bs = Bytes.create len in
+      Bigstringaf.blit_to_bytes buf.buffer ~src_off:(buf.offset + buf.r_pos) bs ~dst_off:0 ~len;
+      return (bs, {buf with r_pos = buf.r_pos + len})
     end 
   else 
     fail (`OutOfBounds (`Msg "A_buf.read_bytes"))
@@ -176,9 +176,9 @@ let get_byte ~at buf =
 let get_bytes ~at len buf = 
   if at >= 0 && len >= 0 && at + len <= buf.w_pos then
     begin
-      let s = Bytes.create len in
-      Bigstringaf.blit_to_bytes buf.buffer ~src_off:(buf.offset + at) s ~dst_off:0 ~len;
-      return s
+      let bs = Bytes.create len in
+      Bigstringaf.blit_to_bytes buf.buffer ~src_off:(buf.offset + at) bs ~dst_off:0 ~len;
+      return bs
     end 
   else 
     fail (`OutOfBounds (`Msg "A_buf.get_bytes"))
@@ -198,28 +198,28 @@ let get_buf ~at len buf = get_bigstring ~at len buf |> function
   | Error _ -> fail (`OutOfBounds (`Msg "A_buf.get_buf"))
 
 
-let rec write_byte c buf = 
+let rec write_byte b buf = 
   if writable buf then
     begin
-      Bigstringaf.set buf.buffer (buf.offset + buf.w_pos) c;
+      Bigstringaf.set buf.buffer (buf.offset + buf.w_pos) b;
       return { buf with w_pos = buf.w_pos + 1}
     end
   else
     match buf.grow with 
     | 0 -> fail (`OutOfBounds (`Msg "IOBuf.write_byte"))
-    | n -> write_byte c (expand n buf) 
+    | n -> write_byte b (expand n buf) 
 
-let rec write_bytes s buf =     
-  let len = Bytes.length s in
+let rec write_bytes bs buf =     
+  let len = Bytes.length bs in
   if len <= writable_bytes buf then
     begin
-      Bigstringaf.blit_from_bytes s ~src_off:0 buf.buffer ~dst_off:(buf.offset + buf.w_pos) ~len;
+      Bigstringaf.blit_from_bytes bs ~src_off:0 buf.buffer ~dst_off:(buf.offset + buf.w_pos) ~len;
       return {buf with w_pos = buf.w_pos + len}
     end 
   else 
     match buf.grow with 
     | 0 -> fail (`OutOfBounds (`Msg "IOBuf.write_bytes"))
-    | n -> write_bytes s (expand n buf)
+    | n -> write_bytes bs (expand n buf)
 
 let rec write_bigstring src buf  =
   let len = Bigstringaf.length src in
@@ -246,34 +246,34 @@ let rec write_buf src buf  =
     | n -> write_buf src (expand n buf)
 
 
-let rec set_byte c ~at buf = 
+let rec set_byte b ~at buf = 
   if at >= 0 then 
     begin
       if at + 1 <= capacity buf then
         begin
-          Bigstringaf.set buf.buffer (buf.offset + at) c;
+          Bigstringaf.set buf.buffer (buf.offset + at) b;
           return buf
         end
       else
         match buf.grow with 
         | 0 -> fail (`OutOfBounds (`Msg "IOBuf.set_byte"))
-        | n -> set_byte ~at c (expand n buf) 
+        | n -> set_byte ~at b (expand n buf) 
     end
   else fail (`OutOfBounds (`Msg "IOBuf.set_byte"))
 
-let rec set_bytes s ~at buf = 
+let rec set_bytes bs ~at buf = 
   if at >= 0 then 
     begin
-      let len = Bytes.length s in
+      let len = Bytes.length bs in
       if at + len <= capacity buf then
         begin
-          Bigstringaf.blit_from_bytes s ~src_off:0 buf.buffer ~dst_off:(buf.offset + at) ~len;
+          Bigstringaf.blit_from_bytes bs ~src_off:0 buf.buffer ~dst_off:(buf.offset + at) ~len;
           return buf
         end
       else
         match buf.grow with 
         | 0 -> fail (`OutOfBounds (`Msg "IOBuf.set_bytes"))
-        | n -> set_bytes ~at s (expand n buf) 
+        | n -> set_bytes ~at bs (expand n buf) 
     end
   else fail (`OutOfBounds (`Msg "IOBuf.set_bytes"))
 
