@@ -11,11 +11,11 @@ val create : ?grow:int -> int -> t
 
 val from_bytes : ?grow:int -> bytes -> t 
 (** [from_bytes bs] creates an A_buf by wrapping [bs].
-    The capacity for the A_buf will be set to the length of [bs]. *)
+    The resulting A_buf writer position will be set to the length of [bs]. *)
 
 val from_bigstring : ?grow:int -> bigstring -> t 
 (** [from_bigstring bs] creates an A_buf by wrapping [bs].
-    The capacity for the A_buf will be set to the length of [bs]. *)
+    The resulting A_buf writer position will be set to the length of [bs]. *)
 
 val slice : int -> int -> t -> (t, error) result 
 (** [slice from len buf] creates an A_buf that wraps the subregion 
