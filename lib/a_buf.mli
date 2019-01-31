@@ -1,13 +1,17 @@
 open Atypes
 
-type byte = char
-type bigstring = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
+type byte = A_bytes.byte
+type bigstring = A_bytes.bigstring
 type t      
 
 include Ordered.Comparable with type t := t
 
 val create : ?grow:int -> int -> t
 (** [create c] allocates a new A_buf of capacity [c]. *)
+
+val from_a_bytes : A_bytes.t -> t 
+(** [from_a_bytes bs] creates an A_buf by wrapping [bs].
+    The resulting A_buf writer position will be set to the capacity of [bs]. *)
 
 val from_bytes : ?grow:int -> bytes -> t 
 (** [from_bytes bs] creates an A_buf by wrapping [bs].
@@ -87,6 +91,10 @@ val read_bytes : int -> t -> ((bytes * t), error) result
 (** [read_bytes n buf] gets [n] bytes from [buf] at reader position and 
     increases the reader position by [n] in [buf]. *)
 
+val read_a_bytes : int -> t -> (A_bytes.t * t, error) result 
+(** [read_a_bytes n buf] gets [n] bytes from [buf] at reader position and 
+    increases the reader position by [n] in [buf]. *)
+
 val read_bigstring : int -> t -> (bigstring * t, error) result 
 (** [read_bigstring n buf] gets [n] bytes from [buf] at reader position and 
     increases the reader position by [n] in [buf]. *)
@@ -101,6 +109,9 @@ val get_byte : at:int -> t -> (byte, error) result
 
 val get_bytes : at:int -> int -> t -> (bytes, error) result 
 (** [get_bytes ~at n buf] gets [n] bytes from [buf] at index [at]. *)
+
+val get_a_bytes : at:int -> int -> t -> (A_bytes.t, error) result 
+(** [get_a_bytes ~at n buf] gets [n] bytes from [buf] at index [at]. *)
 
 val get_bigstring : at:int -> int -> t -> (bigstring, error) result 
 (** [get_bigstring ~at n buf] gets [n] bytes from [buf] at index [at]. *)
@@ -117,6 +128,10 @@ val write_bytes : bytes -> t -> (t, error) result
 (** [write_bytes bs buf] sets the bytes [bs] in [buf] at writer position and 
     increases the writer position by (length [bs]) in [buf]. *)
 
+val write_a_bytes : A_bytes.t -> t -> (t, error) result 
+(** [write_a_bytes bs buf] sets the bytes [bs] in [buf] at writer position and 
+    increases the writer position by (length [bs]) in [buf]. *)
+
 val write_bigstring : bigstring -> t -> (t, error) result 
 (** [write_bigstring bs buf] sets the bytes [bs] in [buf] at writer position and 
     increases the writer position by (length [bs]) in [buf]. *)
@@ -131,6 +146,9 @@ val set_byte : byte -> at:int -> t -> (t, error) result
 
 val set_bytes : bytes -> at:int -> t -> (t, error) result 
 (** [set_bytes bs ~at buf] sets the bytes [bs] in [buf] at index [at]. *)
+
+val set_a_bytes : A_bytes.t -> at:int -> t -> (t, error) result 
+(** [set_a_bytes bs ~at buf] sets the bytes [bs] in [buf] at index [at]. *)
 
 val set_bigstring : bigstring -> at:int -> t -> (t, error) result 
 (** [set_bigstring bs ~at buf] sets the bytes [bs] in [buf] at index [at]. *)
@@ -157,6 +175,14 @@ val blit_from_bigstring : src:bigstring -> src_idx:int -> dst:t -> dst_idx:int -
 
 val blit_to_bigstring : src:t -> src_idx:int -> dst:bigstring -> dst_idx:int -> len:int -> (unit, error) result 
 (** [blit_to_bigstring ~src ~src_idx ~dst ~dst_idx ~len] copies [len] bytes from [src] at index [src_idx] 
+    to [dst] at index [dst_idx]. *)
+
+val blit_from_a_bytes : src:A_bytes.t -> src_idx:int -> dst:t -> dst_idx:int -> len:int -> (unit, error) result 
+(** [blit_from_a_bytes ~src ~src_idx ~dst ~dst_idx ~len] copies [len] bytes from [src] at index [src_idx] 
+    to [dst] at index [dst_idx]. *)
+
+val blit_to_a_bytes : src:t -> src_idx:int -> dst:A_bytes.t -> dst_idx:int -> len:int -> (unit, error) result 
+(** [blit_to_a_bytes ~src ~src_idx ~dst ~dst_idx ~len] copies [len] bytes from [src] at index [src_idx] 
     to [dst] at index [dst_idx]. *)
 
 
