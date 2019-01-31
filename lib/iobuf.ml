@@ -5,9 +5,9 @@ open Identifiers
 module IOBuf = struct
 
   module Id = NumId.Make(Int64)
-
+  module Buffer = Lwt_bytes
   type t = 
-    { buffer : Bigstringaf.t
+    { buffer : Buffer.t
     ; pos: int
     ; limit : int
     ; capacity: int
