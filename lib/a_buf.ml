@@ -119,27 +119,58 @@ let skip n buf = set_r_pos (buf.r_pos + n) buf |> function
   | Error _ ->  fail (`OutOfBounds (`Msg (Printf.sprintf "A_buf.skip %d" n)))
 
 
-let rec blit_from_bigstring ~src ~src_idx ~dst ~dst_idx ~len = 
-  if src_idx >= 0 && len >= 0 && src_idx + len <= Bigstringaf.length src && dst_idx >= 0 then 
+let rec blit ~src ~src_idx ~dst ~dst_idx ~len = 
+  if src_idx >= 0 && len >= 0 && src_idx + len <= capacity src && dst_idx >= 0 then 
     begin
-      if dst_idx + len <= capacity dst then
-        begin
-          return (Bigstringaf.blit src ~src_off:src_idx dst.buffer ~dst_off:(dst.offset + dst_idx) ~len)
-        end
+      if dst_idx + len <= capacity dst 
+      then
+        return (Bigstringaf.blit src.buffer ~src_off:(src.offset + src_idx) dst.buffer ~dst_off:(dst.offset + dst_idx) ~len)
+      else
+        match dst.grow with 
+        | 0 -> fail (`OutOfBounds (`Msg "A_buf.blit"))
+        | n -> blit ~src ~src_idx ~dst:(expand n dst) ~dst_idx ~len
+    end
+  else fail (`OutOfBounds (`Msg "A_buf.blit"))
+
+let rec blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
+  if src_idx >= 0 && len >= 0 && src_idx + len <= Bytes.length src && dst_idx >= 0 then 
+    begin
+      if dst_idx + len <= capacity dst 
+      then
+          return (Bigstringaf.blit_from_bytes src ~src_off:src_idx dst.buffer ~dst_off:(dst.offset + dst_idx) ~len)
       else
         match dst.grow with 
         | 0 -> fail (`OutOfBounds (`Msg "A_buf.blit_from_bytes"))
-        | n -> blit_from_bigstring ~src ~src_idx ~dst:(expand n dst) ~dst_idx ~len
+        | n -> blit_from_bytes ~src ~src_idx ~dst:(expand n dst) ~dst_idx ~len
     end
   else fail (`OutOfBounds (`Msg "A_buf.blit_from_bytes"))
   
-let blit_to_bigstring ~src ~src_idx ~dst ~dst_idx ~len = 
-  if src_idx >= 0 && len >= 0 && src_idx + len <= src.w_pos then
-    begin
-      return (Bigstringaf.blit src.buffer ~src_off:(src.offset + src_idx) dst ~dst_off:dst_idx ~len)
-    end
+let blit_to_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
+  if src_idx >= 0 && len >= 0 && src_idx + len <= src.w_pos 
+  then
+    return (Bigstringaf.blit_to_bytes src.buffer ~src_off:(src.offset + src_idx) dst ~dst_off:dst_idx ~len)
   else 
     fail (`OutOfBounds (`Msg "A_buf.blit_to_bytes"))
+
+let rec blit_from_bigstring ~src ~src_idx ~dst ~dst_idx ~len = 
+  if src_idx >= 0 && len >= 0 && src_idx + len <= Bigstringaf.length src && dst_idx >= 0 then 
+    begin
+      if dst_idx + len <= capacity dst 
+      then
+          return (Bigstringaf.blit src ~src_off:src_idx dst.buffer ~dst_off:(dst.offset + dst_idx) ~len)
+      else
+        match dst.grow with 
+        | 0 -> fail (`OutOfBounds (`Msg "A_buf.blit_from_bigstring"))
+        | n -> blit_from_bigstring ~src ~src_idx ~dst:(expand n dst) ~dst_idx ~len
+    end
+  else fail (`OutOfBounds (`Msg "A_buf.blit_from_bigstring"))
+  
+let blit_to_bigstring ~src ~src_idx ~dst ~dst_idx ~len = 
+  if src_idx >= 0 && len >= 0 && src_idx + len <= src.w_pos 
+  then
+    return (Bigstringaf.blit src.buffer ~src_off:(src.offset + src_idx) dst ~dst_off:dst_idx ~len)
+  else 
+    fail (`OutOfBounds (`Msg "A_buf.blit_to_bigstring"))
 
 
 let read_byte buf =
