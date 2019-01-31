@@ -88,10 +88,10 @@ let rec blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len =
         end
       else
         match dst.grow with 
-        | 0 -> fail (`OutOfBounds (`Msg "IOBuf.copy_from"))
+        | 0 -> fail (`OutOfBounds (`Msg "IOBuf.blit_from_bytes"))
         | n -> blit_from_bytes ~src ~src_idx ~dst:(expand n dst) ~dst_idx ~len
     end
-  else fail (`OutOfBounds (`Msg "IOBuf.copy_from"))
+  else fail (`OutOfBounds (`Msg "IOBuf.blit_from_bytes"))
   
 let blit_to_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
   if src_idx >= 0 && len >= 0 && src_idx + len <= src.w_pos then
@@ -99,7 +99,7 @@ let blit_to_bytes ~src ~src_idx ~dst ~dst_idx ~len =
       return (Bigstringaf.blit src.buffer ~src_off:src_idx dst ~dst_off:dst_idx ~len)
     end
   else 
-    fail (`OutOfBounds (`Msg "A_buf.copy_to"))
+    fail (`OutOfBounds (`Msg "A_buf.blit_to_bytes"))
 
 
 let read_char buf =
