@@ -128,10 +128,10 @@ let rec blit_from_bigstring ~src ~src_idx ~dst ~dst_idx ~len =
         end
       else
         match dst.grow with 
-        | 0 -> fail (`OutOfBounds (`Msg "IOBuf.blit_from_bytes"))
+        | 0 -> fail (`OutOfBounds (`Msg "A_buf.blit_from_bytes"))
         | n -> blit_from_bigstring ~src ~src_idx ~dst:(expand n dst) ~dst_idx ~len
     end
-  else fail (`OutOfBounds (`Msg "IOBuf.blit_from_bytes"))
+  else fail (`OutOfBounds (`Msg "A_buf.blit_from_bytes"))
   
 let blit_to_bigstring ~src ~src_idx ~dst ~dst_idx ~len = 
   if src_idx >= 0 && len >= 0 && src_idx + len <= src.w_pos then
@@ -217,7 +217,7 @@ let rec write_byte b buf =
     end
   else
     match buf.grow with 
-    | 0 -> fail (`OutOfBounds (`Msg "IOBuf.write_byte"))
+    | 0 -> fail (`OutOfBounds (`Msg "A_buf.write_byte"))
     | n -> write_byte b (expand n buf) 
 
 let rec write_bytes bs buf =     
@@ -229,7 +229,7 @@ let rec write_bytes bs buf =
     end 
   else 
     match buf.grow with 
-    | 0 -> fail (`OutOfBounds (`Msg "IOBuf.write_bytes"))
+    | 0 -> fail (`OutOfBounds (`Msg "A_buf.write_bytes"))
     | n -> write_bytes bs (expand n buf)
 
 let rec write_bigstring src buf  =
@@ -241,7 +241,7 @@ let rec write_bigstring src buf  =
     end
   else
     match buf.grow with 
-    | 0 -> fail (`OutOfBounds (`Msg "IOBuf.write_bigstring"))
+    | 0 -> fail (`OutOfBounds (`Msg "A_buf.write_bigstring"))
     | n -> write_bigstring src (expand n buf)
 
 let rec write_buf src buf  =
@@ -253,7 +253,7 @@ let rec write_buf src buf  =
     end
   else
     match buf.grow with 
-    | 0 -> fail (`OutOfBounds (`Msg "IOBuf.write_buf"))
+    | 0 -> fail (`OutOfBounds (`Msg "A_buf.write_buf"))
     | n -> write_buf src (expand n buf)
 
 
@@ -267,10 +267,10 @@ let rec set_byte b ~at buf =
         end
       else
         match buf.grow with 
-        | 0 -> fail (`OutOfBounds (`Msg "IOBuf.set_byte"))
+        | 0 -> fail (`OutOfBounds (`Msg "A_buf.set_byte"))
         | n -> set_byte ~at b (expand n buf) 
     end
-  else fail (`OutOfBounds (`Msg "IOBuf.set_byte"))
+  else fail (`OutOfBounds (`Msg "A_buf.set_byte"))
 
 let rec set_bytes bs ~at buf = 
   if at >= 0 then 
@@ -283,10 +283,10 @@ let rec set_bytes bs ~at buf =
         end
       else
         match buf.grow with 
-        | 0 -> fail (`OutOfBounds (`Msg "IOBuf.set_bytes"))
+        | 0 -> fail (`OutOfBounds (`Msg "A_buf.set_bytes"))
         | n -> set_bytes ~at bs (expand n buf) 
     end
-  else fail (`OutOfBounds (`Msg "IOBuf.set_bytes"))
+  else fail (`OutOfBounds (`Msg "A_buf.set_bytes"))
 
 let rec set_bigstring src ~at buf = 
   if at >= 0 then 
@@ -299,10 +299,10 @@ let rec set_bigstring src ~at buf =
         end
       else
         match buf.grow with 
-        | 0 -> fail (`OutOfBounds (`Msg "IOBuf.set_bigstring"))
+        | 0 -> fail (`OutOfBounds (`Msg "A_buf.set_bigstring"))
         | n -> set_bigstring ~at src (expand n buf) 
     end
-  else fail (`OutOfBounds (`Msg "IOBuf.set_bigstring"))
+  else fail (`OutOfBounds (`Msg "A_buf.set_bigstring"))
 
 let rec set_buf src ~at buf = 
   if at >= 0 then 
@@ -315,10 +315,10 @@ let rec set_buf src ~at buf =
         end
       else
         match buf.grow with 
-        | 0 -> fail (`OutOfBounds (`Msg "IOBuf.set_buf"))
+        | 0 -> fail (`OutOfBounds (`Msg "A_buf.set_buf"))
         | n -> set_buf ~at src (expand n buf) 
     end
-  else fail (`OutOfBounds (`Msg "IOBuf.set_buf"))
+  else fail (`OutOfBounds (`Msg "A_buf.set_buf"))
 
 
 let hexdump ?separator:(sep="") buf =
