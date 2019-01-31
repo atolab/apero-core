@@ -3,6 +3,8 @@ open Identifiers
 
 module Id = NumId.Make(Int64)
 
+type byte = char
+type bigstring = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 type t = { 
   id : Id.t;
   buffer : Bigstringaf.t;
@@ -20,7 +22,7 @@ let compare a b = Id.compare a.id b.id
 let equal a b = Id.equal a.id b.id
 
 
-let from_bytes ?(grow=0) bs =
+let from_bigstring ?(grow=0) bs =
   { 
     id = Id.next_id ();
     buffer = bs;
@@ -33,7 +35,13 @@ let from_bytes ?(grow=0) bs =
     grow;
   }
 
-let create ?(grow=0) len = from_bytes ~grow (Bigstringaf.create len)
+let from_bytes ?(grow=0) bs = 
+  let len = Bytes.length bs in 
+  let bigs = Bigstringaf.create len in
+  Bigstringaf.blit_from_bytes bs ~src_off:0 bigs ~dst_off:0 ~len;
+  from_bigstring ~grow bigs
+
+let create ?(grow=0) len = from_bigstring ~grow (Bigstringaf.create len)
 
 let slice from len buf = 
   if from > 0 && len > 0 && (from + len) <= buf.capacity
@@ -100,7 +108,7 @@ let skip n buf = set_r_pos (buf.r_pos + n) buf |> function
   | Error _ ->  fail (`OutOfBounds (`Msg (Printf.sprintf "A_buf.skip %d" n)))
 
 
-let rec blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
+let rec blit_from_bigstring ~src ~src_idx ~dst ~dst_idx ~len = 
   if src_idx >= 0 && len >= 0 && src_idx + len <= Bigstringaf.length src && dst_idx >= 0 then 
     begin
       if dst_idx + len <= capacity dst then
@@ -110,11 +118,11 @@ let rec blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len =
       else
         match dst.grow with 
         | 0 -> fail (`OutOfBounds (`Msg "IOBuf.blit_from_bytes"))
-        | n -> blit_from_bytes ~src ~src_idx ~dst:(expand n dst) ~dst_idx ~len
+        | n -> blit_from_bigstring ~src ~src_idx ~dst:(expand n dst) ~dst_idx ~len
     end
   else fail (`OutOfBounds (`Msg "IOBuf.blit_from_bytes"))
   
-let blit_to_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
+let blit_to_bigstring ~src ~src_idx ~dst ~dst_idx ~len = 
   if src_idx >= 0 && len >= 0 && src_idx + len <= src.w_pos then
     begin
       return (Bigstringaf.blit src.buffer ~src_off:(src.offset + src_idx) dst ~dst_off:dst_idx ~len)
@@ -123,26 +131,26 @@ let blit_to_bytes ~src ~src_idx ~dst ~dst_idx ~len =
     fail (`OutOfBounds (`Msg "A_buf.blit_to_bytes"))
 
 
-let read_char buf =
+let read_byte buf =
   if readable buf then
     begin
       let c = Bigstringaf.get buf.buffer (buf.offset + buf.r_pos) in
       return (c, {buf with r_pos = buf.r_pos+1})
     end
   else 
-    fail (`OutOfBounds (`Msg "A_buf.read_char"))
+    fail (`OutOfBounds (`Msg "A_buf.read_byte"))
 
-let read_chars len buf = 
+let read_bytes len buf = 
   if len >= 0 && len <= readable_bytes buf then
     begin
       let s = Bytes.create len in
       Bigstringaf.blit_to_bytes buf.buffer ~src_off:(buf.offset + buf.r_pos) s ~dst_off:0 ~len;
-      return (Bytes.to_string s, {buf with r_pos = buf.r_pos + len})
+      return (s, {buf with r_pos = buf.r_pos + len})
     end 
   else 
-    fail (`OutOfBounds (`Msg "A_buf.read_chars"))
+    fail (`OutOfBounds (`Msg "A_buf.read_bytes"))
 
-let read_bytes len buf = 
+let read_bigstring len buf = 
   if len >= 0 && len <= readable_bytes buf then
     begin
       let dst = Bigstringaf.create len in
@@ -150,32 +158,32 @@ let read_bytes len buf =
       return (dst, {buf with r_pos = buf.r_pos + len})
     end
   else 
-    fail (`OutOfBounds (`Msg "A_buf.read_bytes"))
+    fail (`OutOfBounds (`Msg "A_buf.read_bigstring"))
 
-let read_buf len buf = read_bytes len buf |> function 
-  | Ok (bs, buf) -> return (from_bytes bs, buf)
+let read_buf len buf = read_bigstring len buf |> function 
+  | Ok (bs, buf) -> return (from_bigstring bs, buf)
   | Error _ -> fail (`OutOfBounds (`Msg "A_buf.read_buf"))
 
 
-let get_char ~at buf =
+let get_byte ~at buf =
   if at >= 0 && at + 1 <= buf.w_pos then
     begin
       return (Bigstringaf.get buf.buffer (buf.offset + at))
     end
   else 
-    fail (`OutOfBounds (`Msg "A_buf.get_char"))
+    fail (`OutOfBounds (`Msg "A_buf.get_byte"))
 
-let get_chars ~at len buf = 
+let get_bytes ~at len buf = 
   if at >= 0 && len >= 0 && at + len <= buf.w_pos then
     begin
       let s = Bytes.create len in
       Bigstringaf.blit_to_bytes buf.buffer ~src_off:(buf.offset + at) s ~dst_off:0 ~len;
-      return (Bytes.to_string s)
+      return s
     end 
   else 
-    fail (`OutOfBounds (`Msg "A_buf.get_chars"))
+    fail (`OutOfBounds (`Msg "A_buf.get_bytes"))
 
-let get_bytes ~at len buf = 
+let get_bigstring ~at len buf = 
   if at >= 0 && len >= 0 && at + len <= buf.w_pos then
     begin
       let dst = Bigstringaf.create len in 
@@ -183,14 +191,14 @@ let get_bytes ~at len buf =
       return dst
     end
   else 
-    fail (`OutOfBounds (`Msg "A_buf.get_bytes"))
+    fail (`OutOfBounds (`Msg "A_buf.get_bigstring"))
 
-let get_buf ~at len buf = get_bytes ~at len buf |> function 
-  | Ok bs -> return (from_bytes bs)
+let get_buf ~at len buf = get_bigstring ~at len buf |> function 
+  | Ok bs -> return (from_bigstring bs)
   | Error _ -> fail (`OutOfBounds (`Msg "A_buf.get_buf"))
 
 
-let rec write_char c buf = 
+let rec write_byte c buf = 
   if writable buf then
     begin
       Bigstringaf.set buf.buffer (buf.offset + buf.w_pos) c;
@@ -198,22 +206,22 @@ let rec write_char c buf =
     end
   else
     match buf.grow with 
-    | 0 -> fail (`OutOfBounds (`Msg "IOBuf.write_char"))
-    | n -> write_char c (expand n buf) 
+    | 0 -> fail (`OutOfBounds (`Msg "IOBuf.write_byte"))
+    | n -> write_byte c (expand n buf) 
 
-let rec write_chars s buf =     
-  let len = String.length s in
+let rec write_bytes s buf =     
+  let len = Bytes.length s in
   if len <= writable_bytes buf then
     begin
-      Bigstringaf.blit_from_bytes (Bytes.of_string s) ~src_off:0 buf.buffer ~dst_off:(buf.offset + buf.w_pos) ~len;
+      Bigstringaf.blit_from_bytes s ~src_off:0 buf.buffer ~dst_off:(buf.offset + buf.w_pos) ~len;
       return {buf with w_pos = buf.w_pos + len}
     end 
   else 
     match buf.grow with 
-    | 0 -> fail (`OutOfBounds (`Msg "IOBuf.write_chars"))
-    | n -> write_chars s (expand n buf)
+    | 0 -> fail (`OutOfBounds (`Msg "IOBuf.write_bytes"))
+    | n -> write_bytes s (expand n buf)
 
-let rec write_bytes src buf  =
+let rec write_bigstring src buf  =
   let len = Bigstringaf.length src in
   if len <= writable_bytes buf then
     begin
@@ -222,8 +230,8 @@ let rec write_bytes src buf  =
     end
   else
     match buf.grow with 
-    | 0 -> fail (`OutOfBounds (`Msg "IOBuf.write_bytes"))
-    | n -> write_bytes src (expand n buf)
+    | 0 -> fail (`OutOfBounds (`Msg "IOBuf.write_bigstring"))
+    | n -> write_bigstring src (expand n buf)
 
 let rec write_buf src buf  =
   let len = readable_bytes src in
@@ -238,7 +246,7 @@ let rec write_buf src buf  =
     | n -> write_buf src (expand n buf)
 
 
-let rec set_char c ~at buf = 
+let rec set_byte c ~at buf = 
   if at >= 0 then 
     begin
       if at + 1 <= capacity buf then
@@ -248,28 +256,28 @@ let rec set_char c ~at buf =
         end
       else
         match buf.grow with 
-        | 0 -> fail (`OutOfBounds (`Msg "IOBuf.set_char"))
-        | n -> set_char ~at c (expand n buf) 
+        | 0 -> fail (`OutOfBounds (`Msg "IOBuf.set_byte"))
+        | n -> set_byte ~at c (expand n buf) 
     end
-  else fail (`OutOfBounds (`Msg "IOBuf.set_char"))
+  else fail (`OutOfBounds (`Msg "IOBuf.set_byte"))
 
-let rec set_chars s ~at buf = 
+let rec set_bytes s ~at buf = 
   if at >= 0 then 
     begin
-      let len = String.length s in
+      let len = Bytes.length s in
       if at + len <= capacity buf then
         begin
-          Bigstringaf.blit_from_bytes (Bytes.of_string s) ~src_off:0 buf.buffer ~dst_off:(buf.offset + at) ~len;
+          Bigstringaf.blit_from_bytes s ~src_off:0 buf.buffer ~dst_off:(buf.offset + at) ~len;
           return buf
         end
       else
         match buf.grow with 
-        | 0 -> fail (`OutOfBounds (`Msg "IOBuf.set_chars"))
-        | n -> set_chars ~at s (expand n buf) 
+        | 0 -> fail (`OutOfBounds (`Msg "IOBuf.set_bytes"))
+        | n -> set_bytes ~at s (expand n buf) 
     end
-  else fail (`OutOfBounds (`Msg "IOBuf.set_chars"))
+  else fail (`OutOfBounds (`Msg "IOBuf.set_bytes"))
 
-let rec set_bytes src ~at buf = 
+let rec set_bigstring src ~at buf = 
   if at >= 0 then 
     begin
       let len = Bigstringaf.length src in
@@ -280,10 +288,10 @@ let rec set_bytes src ~at buf =
         end
       else
         match buf.grow with 
-        | 0 -> fail (`OutOfBounds (`Msg "IOBuf.set_bytes"))
-        | n -> set_bytes ~at src (expand n buf) 
+        | 0 -> fail (`OutOfBounds (`Msg "IOBuf.set_bigstring"))
+        | n -> set_bigstring ~at src (expand n buf) 
     end
-  else fail (`OutOfBounds (`Msg "IOBuf.set_bytes"))
+  else fail (`OutOfBounds (`Msg "IOBuf.set_bigstring"))
 
 let rec set_buf src ~at buf = 
   if at >= 0 then 
