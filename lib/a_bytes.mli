@@ -6,8 +6,11 @@ type t
 
 include Ordered.Comparable with type t := t
 
-val create : ?grow:int -> int -> t
-(** [create c] allocates a new A_bytes of capacity [c]. *)
+val create_bytes : ?grow:int -> int -> t
+(** [create_bytes c] allocates a new A_bytes of bytes and of capacity [c]. *)
+
+val create_bigstring : ?grow:int -> int -> t
+(** [create_bigstring c] allocates a new A_bytes of bigstring and of capacity [c]. *)
 
 val from_bytes : ?grow:int -> bytes -> t 
 (** [from_bytes bs] creates an A_bytes by wrapping [bs].
@@ -16,6 +19,13 @@ val from_bytes : ?grow:int -> bytes -> t
 val from_bigstring : ?grow:int -> bigstring -> t 
 (** [from_bigstring bs] creates an A_bytes by wrapping [bs].
     The capacity for the A_bytes will be set to the length of [bs]. *)
+
+val wrap : ?grow:int -> t list -> t
+(** [wrap bs] creates an A_bytes by wrapping the A_bytes in the list [bs].
+    The capacity for the A_bytes will be set to the sum of the capacities 
+    of the A_bytes in the list [bs].
+    This operation involves NO COPY. Modifications on the resulting 
+    A_bytes will modify the original A_bytes in the list [bs] and reverse. *)
 
 val slice : int -> int -> t -> (t, error) result 
 (** [slice from len bs] creates an A_bytes that wraps the subregion 
