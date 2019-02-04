@@ -32,10 +32,31 @@ let from_bytes ?(grow=0) bs = from_a_bytes (A_bytes.from_bytes ~grow  bs)
 
 let from_bigstring ?(grow=0) bs = from_a_bytes (A_bytes.from_bigstring ~grow  bs)
 
-let create ?(grow=0) len =
+let create_bigstring ?(grow=0) len =
   { 
     id = Id.next_id ();
-    buffer = A_bytes.create ~grow len;
+    buffer = A_bytes.create_bigstring ~grow len;
+    r_pos = 0;
+    w_pos = 0;
+    r_mark = 0;
+    w_mark = 0;
+  }
+
+let create_bytes ?(grow=0) len =
+  { 
+    id = Id.next_id ();
+    buffer = A_bytes.create_bytes ~grow len;
+    r_pos = 0;
+    w_pos = 0;
+    r_mark = 0;
+    w_mark = 0;
+  }
+
+let wrap ?(grow=0) bslist = 
+  let a_bytes = List.map (fun buf -> buf.buffer) bslist in
+  { 
+    id = Id.next_id ();
+    buffer = A_bytes.wrap ~grow a_bytes;
     r_pos = 0;
     w_pos = 0;
     r_mark = 0;
