@@ -23,8 +23,8 @@ depends: [
   "ppx_deriving" 
   "uuidm" 
   "lwt_ppx"
-  "yojson"
-  "ppx_deriving_yojson" 
+  "yojson" {>= "1.5.0" & < "1.6.0"}
+  "ppx_deriving_yojson" {= "3.3"}
 ]
 
 synopsis : "OCaml Utility Library"
