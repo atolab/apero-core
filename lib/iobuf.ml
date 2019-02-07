@@ -151,7 +151,7 @@ module IOBuf = struct
       fail (`OutOfBounds (`Msg "IOBuf.get_buf"))
   
   let to_io_vector buf =
-    Lwt_bytes.{ iov_buffer = buf.buffer; iov_offset = buf.pos; iov_length = buf.limit; }
+    Lwt_bytes.{ iov_buffer = buf.buffer; iov_offset = buf.pos; iov_length = buf.limit - buf.pos; }
 
   let rec put_string s buf =     
     let len = String.length s in
