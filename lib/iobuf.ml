@@ -31,7 +31,6 @@ module IOBuf = struct
     "(pos: " ^ (string_of_int buf.pos) ^ ", limit: "^ (string_of_int buf.limit) ^ " content: " ^ (hexdump buf ~separator:":")
 
   let create ?(grow=0) len =  
-    Logs.debug (fun m -> m "IOBuf.create %d " len);
     { buffer = Lwt_bytes.create len;  pos = 0; limit = len; capacity = len; mark = 0; id = Id.next_id (); grow }
 
   let to_bytes buf = buf.buffer

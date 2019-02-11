@@ -60,7 +60,6 @@ let decode_vle buf =
   in decode_vle_rec 0L 0 buf
 
 let encode_bytes src dst =
-  Logs.debug (fun m -> m "Encoding Bytes");
   let n = IOBuf.available src in
   let m = IOBuf.available dst in
   if n <= m then
