@@ -53,7 +53,7 @@ let create_bytes ?(grow=0) len =
   }
 
 let wrap ?(grow=0) bslist = 
-  let a_bytes = List.map (fun buf -> buf.buffer) bslist in
+  let a_bytes = List.map (fun buf -> A_bytes.slice buf.r_pos (buf.w_pos - buf.r_pos) buf.buffer |> Apero.Result.get) bslist in
   { 
     id = Id.next_id ();
     buffer = A_bytes.wrap ~grow a_bytes;
