@@ -24,7 +24,7 @@ val from_bigstring : ?grow:int -> bigstring -> t
 
 val wrap : ?grow:int -> t list -> t
 (** [wrap bs] creates an A_buf by wrapping the A_bufs in the list [bs].
-    The capacity for the A_buf will be set to the sum of the capacities 
+    The capacity for the A_buf will be set to the sum of the readable_bytes 
     of the A_bufs in the list [bs].
     This operation involves NO COPY. Modifications on the resulting 
     A_buf will modify the original A_bufs in the list [bs] and reverse. *)
