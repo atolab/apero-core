@@ -193,6 +193,7 @@ val blit_to_abytes : src:t -> src_idx:int -> dst:Abytes.t -> dst_idx:int -> len:
 (** [blit_to_abytes ~src ~src_idx ~dst ~dst_idx ~len] copies [len] bytes from [src] at index [src_idx] 
     to [dst] at index [dst_idx]. *)
 
+val to_io_vecs : ?offset:int -> append_bytes:('a -> bytes -> int -> int -> unit) -> append_bigarray:('a -> bigstring -> int -> int -> unit) -> 'a -> t -> unit
 
 val hexdump : ?separator:string -> t -> string
 (** [hexdump buf] returns an hexadecimal representation of the bytes 
