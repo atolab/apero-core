@@ -52,7 +52,7 @@ let create_bytes ?(grow=0) len =
   }
 
 let wrap ?(grow=0) bslist = 
-  let abytes = List.map (fun buf -> buf.buffer) bslist in
+  let abytes = List.map (fun buf -> Abytes.slice buf.r_pos (buf.w_pos - buf.r_pos) buf.buffer) bslist in
   { 
     id = Id.next_id ();
     buffer = Abytes.wrap ~grow abytes;
