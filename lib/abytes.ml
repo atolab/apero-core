@@ -290,6 +290,24 @@ let set_bigstring src ~at bs =
 let set_abytes src ~at bs = 
   blit ~src ~src_idx:0 ~dst:bs ~dst_idx:at ~len:(capacity src) 
 
+let rec to_io_vecs ~offset ~len ~append_bytes ~append_bigarray io_vecs bs = 
+  match bs.buffer with 
+  | Bytes b -> append_bytes io_vecs b (bs.offset + offset) len 
+  | Bigstr b -> append_bigarray io_vecs b (bs.offset + offset) len 
+  | Bufset b -> 
+    let rec set_to_io_vecs ~offset ~len ~append_bytes ~append_bigarray io_vecs b = match b with 
+    | [] -> ()
+    | hd :: tl -> 
+      if capacity hd >= offset
+      then 
+        let fst_len = min (len) (capacity hd - offset) in
+        to_io_vecs ~offset ~len:fst_len  ~append_bytes ~append_bigarray io_vecs hd; 
+        set_to_io_vecs ~offset:0 ~len:(len - fst_len) ~append_bytes ~append_bigarray io_vecs tl; 
+      else 
+        set_to_io_vecs ~offset:(offset - capacity hd) ~len ~append_bytes ~append_bigarray io_vecs tl in 
+    set_to_io_vecs  ~offset ~len ~append_bytes ~append_bigarray io_vecs b
+
+
 let hexdump ?separator:(sep="") bs =
   let rec hexdump bs idx =
     if idx < bs.capacity then 
