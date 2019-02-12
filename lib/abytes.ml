@@ -8,7 +8,7 @@ type bigstring = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.
 type buffer = | Bytes of bytes | Bigstr of bigstring | Bufset of t list
 and  t = { 
   id : Id.t;
-  buffer : buffer;
+  mutable buffer : buffer;
   mutable offset : int; 
   mutable capacity : int; 
   grow : int;
@@ -66,9 +66,15 @@ let slice from len bs =
 
 let expand n bs = 
   match bs.buffer with 
-  | Bytes _ -> wrap ~grow:n [bs; create_bytes n]
-  | Bigstr _ -> wrap ~grow:n [bs; create_bigstring n]
-  | Bufset b -> wrap ~grow:n (List.append b [create_bigstring n]) (* TODO *)
+  | Bytes _ -> 
+    bs.buffer <- Bufset [bs; create_bytes n];
+    bs.capacity <- bs.capacity + n
+  | Bigstr _ -> 
+    bs.buffer <- Bufset [bs; create_bigstring n];
+    bs.capacity <- bs.capacity + n
+  | Bufset b -> 
+    bs.buffer <- Bufset (List.append b [create_bytes n]);
+    bs.capacity <- bs.capacity + n
 
 let rec blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
   if src_idx >= 0 && len >= 0 && src_idx + len <= Bytes.length src && dst_idx >= 0 
@@ -100,7 +106,7 @@ let rec blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len =
     else
       match dst.grow with 
       | 0 -> raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.blit_from_bytes"))
-      | n -> blit_from_bytes ~src ~src_idx ~dst:(expand n dst) ~dst_idx ~len
+      | n -> expand n dst; blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len
   else raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.blit_from_bytes"))
   
 let rec blit_to_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
@@ -161,7 +167,7 @@ let rec blit_from_bigstring ~src ~src_idx ~dst ~dst_idx ~len =
     else
       match dst.grow with 
       | 0 -> raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.blit_from_bigstring"))
-      | n -> blit_from_bigstring ~src ~src_idx ~dst:(expand n dst) ~dst_idx ~len
+      | n -> expand n dst; blit_from_bigstring ~src ~src_idx ~dst ~dst_idx ~len
   else 
     raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.blit_from_bigstring"))
   
@@ -223,7 +229,7 @@ let rec blit ~src ~src_idx ~dst ~dst_idx ~len =
     else
       match dst.grow with 
       | 0 -> raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.blit"))
-      | n -> blit ~src ~src_idx ~dst:(expand n dst) ~dst_idx ~len
+      | n -> expand n dst; blit ~src ~src_idx ~dst ~dst_idx ~len
   else raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.blit"))
 
 let rec get_byte ~at bs =
@@ -277,7 +283,7 @@ let rec set_byte c ~at bs =
       else
         match bs.grow with 
         | 0 -> raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.set_byte"))
-        | n -> set_byte ~at c (expand n bs) 
+        | n -> expand n bs; set_byte ~at c bs
     end
   else raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.set_byte"))
 
