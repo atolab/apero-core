@@ -33,3 +33,4 @@ let guarded g f =
                 ; Lwt.return r)
             (fun e -> Lwt_mutex.unlock g.mutex ; Lwt.fail e)        
     
+let return a b = Lwt.return (a, b)
