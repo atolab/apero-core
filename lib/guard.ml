@@ -6,6 +6,15 @@ let create v =
 
 let get g = g.self
 
+let acquire g = 
+    let open Lwt.Infix in 
+    Lwt_mutex.lock g.mutex 
+    >>= fun () -> Lwt.return g.self
+
+let release g v = 
+    g.self <- v;
+    Lwt_mutex.unlock g.mutex
+    
 let set v g = 
     let open Lwt.Infix in 
     Lwt_mutex.lock g.mutex 
