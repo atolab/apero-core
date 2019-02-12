@@ -27,8 +27,9 @@ let guarded g f =
     fun () -> 
         Lwt.try_bind 
             (fun () -> f g.self)
-            (fun r -> 
-                g.self <- r;
-                Lwt.return @@ Lwt_mutex.unlock g.mutex)
+            (fun (s, r) -> 
+                g.self <- s;
+                Lwt_mutex.unlock g.mutex
+                ; Lwt.return r)
             (fun e -> Lwt_mutex.unlock g.mutex ; Lwt.fail e)        
     
