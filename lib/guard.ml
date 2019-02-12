@@ -1,0 +1,25 @@
+type 'a t = {mutable self: 'a;  mutex: Lwt_mutex.t}
+
+let create v = 
+    { self = v
+    ; mutex = Lwt_mutex.create () }
+
+let get g = g.self
+
+let set v g = 
+    let open Lwt.Infix in 
+    Lwt_mutex.lock g.mutex 
+    >>= fun () -> Lwt.return (g.self <- v) 
+    >>= fun () -> Lwt.return @@ Lwt_mutex.unlock g.mutex
+
+let guarded g f = 
+    let open Lwt.Infix in 
+    Lwt_mutex.lock g.mutex >>=
+    fun () -> 
+        Lwt.try_bind 
+            (fun () -> f g.self)
+            (fun r -> 
+                g.self <- r;
+                Lwt.return @@ Lwt_mutex.unlock g.mutex)
+            (fun e -> Lwt_mutex.unlock g.mutex ; Lwt.fail e)        
+    
