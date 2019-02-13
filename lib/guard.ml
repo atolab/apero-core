@@ -30,7 +30,9 @@ let guarded g f =
             (fun (s, r) -> 
                 g.self <- s;
                 Lwt_mutex.unlock g.mutex
-                ; Lwt.return r)
+                ; r)
             (fun e -> Lwt_mutex.unlock g.mutex ; Lwt.fail e)        
     
-let return v s = Lwt.return (s, v)
+let return v s = Lwt.return (s, Lwt.return v)
+
+let return_lwt v s = Lwt.return (s, v)
