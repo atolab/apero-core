@@ -220,7 +220,12 @@ let to_io_vecs ~idx ~len ~append_bytes ~append_bigarray io_vecs buf =
   Abytes.to_io_vecs ~idx ~len ~append_bytes ~append_bigarray io_vecs buf.buffer
 
 
-let hexdump ?separator:(sep="") buf = Abytes.hexdump ~separator:sep buf.buffer
+let hexdump ?separator:(sep="") buf = 
+  let rec hexdump idx =
+    if idx < buf.w_pos then 
+    (Printf.sprintf "%02x%s" (get_byte ~at:idx buf |> int_of_char ) sep ) ^ (hexdump (idx+1))
+    else "" in 
+  hexdump 0
     
 let to_string buf =
-  "(r_pos: " ^ (string_of_int buf.r_pos) ^ ", w_pos: " ^ (string_of_int buf.w_pos) ^ " content: " ^ (hexdump buf ~separator:":")
+  "(r_pos: " ^ (string_of_int buf.r_pos) ^ ", w_pos: " ^ (string_of_int buf.w_pos) ^ " content: " ^ (hexdump buf ~separator:":") ^ ")"
