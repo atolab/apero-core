@@ -194,9 +194,7 @@ val blit_to_abytes : src:t -> src_idx:int -> dst:Abytes.t -> dst_idx:int -> len:
     to [dst] at index [dst_idx]. *)
 
 
-val writable_to_io_vecs : append_bytes:('a -> bytes -> int -> int -> unit) -> append_bigarray:('a -> bigstring -> int -> int -> unit) -> 'a -> t -> unit
-
-val readable_to_io_vecs : append_bytes:('a -> bytes -> int -> int -> unit) -> append_bigarray:('a -> bigstring -> int -> int -> unit) -> 'a -> t -> unit
+val to_io_vecs : idx:int -> len:int -> append_bytes:('a -> bytes -> int -> int -> unit) -> append_bigarray:('a -> bigstring -> int -> int -> unit) -> 'a -> t -> unit
 
 
 val hexdump : ?separator:string -> t -> string

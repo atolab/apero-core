@@ -83,7 +83,7 @@ val blit_to_bigstring : src:t -> src_idx:int -> dst:bigstring -> dst_idx:int -> 
 (** [blit_to_bigstring ~src ~src_idx ~dst ~dst_idx ~len] copies [len] bytes from [src] at index [src_idx] 
     to [dst] at index [dst_idx]. *)
 
-val to_io_vecs : offset:int -> len:int -> append_bytes:('a -> bytes -> int -> int -> unit) -> append_bigarray:('a -> bigstring -> int -> int -> unit) -> 'a -> t -> unit
+val to_io_vecs : idx:int -> len:int -> append_bytes:('a -> bytes -> int -> int -> unit) -> append_bigarray:('a -> bigstring -> int -> int -> unit) -> 'a -> t -> unit
 
 
 val hexdump : ?separator:string -> t -> string
