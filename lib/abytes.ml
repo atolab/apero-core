@@ -61,7 +61,7 @@ let slice from len bs =
       capacity = len;
       grow = 0;
     }
-  else raise @@ Apero.Exception (`OutOfBounds (`Msg (
+  else raise @@ Atypes.Exception (`OutOfBounds (`Msg (
     Printf.sprintf "Abytes.slice")))
 
 let expand n bs = 
@@ -105,9 +105,9 @@ let rec blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len =
         blit_from_bytes_to_set ~src ~src_idx ~dst:b ~dst_idx ~len
     else
       match dst.grow with 
-      | 0 -> raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.blit_from_bytes"))
+      | 0 -> raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.blit_from_bytes"))
       | n -> expand n dst; blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len
-  else raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.blit_from_bytes"))
+  else raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.blit_from_bytes"))
   
 let rec blit_to_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
   if src_idx >= 0 && len >= 0 && src_idx + len <= capacity src 
@@ -135,7 +135,7 @@ let rec blit_to_bytes ~src ~src_idx ~dst ~dst_idx ~len =
       in 
       blit_set_to_bytes ~src:b ~src_idx ~dst ~dst_idx ~len
   else 
-    raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.blit_to_bytes")) 
+    raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.blit_to_bytes")) 
 
 let rec blit_from_bigstring ~src ~src_idx ~dst ~dst_idx ~len = 
   if src_idx >= 0 && len >= 0 && src_idx + len <= Bigstringaf.length src && dst_idx >= 0 
@@ -166,10 +166,10 @@ let rec blit_from_bigstring ~src ~src_idx ~dst ~dst_idx ~len =
         blit_from_bigstring_to_set ~src ~src_idx ~dst:b ~dst_idx ~len
     else
       match dst.grow with 
-      | 0 -> raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.blit_from_bigstring"))
+      | 0 -> raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.blit_from_bigstring"))
       | n -> expand n dst; blit_from_bigstring ~src ~src_idx ~dst ~dst_idx ~len
   else 
-    raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.blit_from_bigstring"))
+    raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.blit_from_bigstring"))
   
 let rec blit_to_bigstring ~src ~src_idx ~dst ~dst_idx ~len = 
   if src_idx >= 0 && len >= 0 && src_idx + len <= capacity src 
@@ -197,7 +197,7 @@ let rec blit_to_bigstring ~src ~src_idx ~dst ~dst_idx ~len =
       in 
       blit_set_to_bigstring ~src:b ~src_idx ~dst ~dst_idx ~len
   else 
-    raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.blit_to_bigstring")) 
+    raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.blit_to_bigstring")) 
 
 let rec blit ~src ~src_idx ~dst ~dst_idx ~len = 
   if src_idx >= 0 && len >= 0 && src_idx + len <= capacity src && dst_idx >= 0 
@@ -228,9 +228,9 @@ let rec blit ~src ~src_idx ~dst ~dst_idx ~len =
         blit_fromto_set ~src:b ~src_idx ~dst ~dst_idx ~len
     else
       match dst.grow with 
-      | 0 -> raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.blit"))
+      | 0 -> raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.blit"))
       | n -> expand n dst; blit ~src ~src_idx ~dst ~dst_idx ~len
-  else raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.blit"))
+  else raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.blit"))
 
 let rec get_byte ~at bs =
   if at >= 0 && at + 1 <= capacity bs then
@@ -241,7 +241,7 @@ let rec get_byte ~at bs =
       | Bufset b -> 
         let rec get_byte_from_set at set = 
           match set with 
-          | [] -> raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.get_byte"))
+          | [] -> raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.get_byte"))
           | hd :: tl -> 
             if capacity hd > at 
             then get_byte ~at hd
@@ -249,7 +249,7 @@ let rec get_byte ~at bs =
         get_byte_from_set at b)
     end
   else 
-    raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.get_byte"))
+    raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.get_byte"))
 
 let get_bytes ~at len bs = 
   let dst = Bytes.create len in
@@ -273,7 +273,7 @@ let rec set_byte c ~at bs =
           | Bufset b -> 
             let rec set_byte_to_set at set = 
               match set with 
-              | [] -> raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.set_byte"))
+              | [] -> raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.set_byte"))
               | hd :: tl -> 
                 if capacity hd > at 
                 then set_byte c ~at hd
@@ -282,10 +282,10 @@ let rec set_byte c ~at bs =
         end
       else
         match bs.grow with 
-        | 0 -> raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.set_byte"))
+        | 0 -> raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.set_byte"))
         | n -> expand n bs; set_byte ~at c bs
     end
-  else raise @@ Apero.Exception (`OutOfBounds (`Msg "Abytes.set_byte"))
+  else raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.set_byte"))
 
 let set_bytes src ~at bs = 
   blit_from_bytes ~src ~src_idx:0 ~dst:bs ~dst_idx:at ~len:(Bytes.length src)
