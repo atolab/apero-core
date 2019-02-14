@@ -4,6 +4,9 @@ type t
 
 include Ordered.Comparable with type t := t
 
+val create : ?grow:int -> int -> t
+(** [create c] allocates a new Abuf of capacity [c]. *)
+
 val create_bytes : ?grow:int -> int -> t
 (** [create_bytes c] allocates a new Abuf of bytes and of capacity [c]. *)
 

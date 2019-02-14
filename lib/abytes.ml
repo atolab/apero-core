@@ -41,6 +41,8 @@ let create_bigstring ?(grow=0) len = from_bigstring ~grow (Bigstringaf.create le
 
 let create_bytes ?(grow=0) len = from_bytes ~grow (Bytes.create len)
 
+let create = create_bigstring
+
 let capacity bs = bs.capacity
 
 let wrap ?(grow=0) bslist = 
@@ -73,8 +75,9 @@ let expand n bs =
     bs.buffer <- Bufset [bs; create_bigstring n];
     bs.capacity <- bs.capacity + n
   | Bufset b -> 
-    bs.buffer <- Bufset (List.append b [create_bytes n]);
+    bs.buffer <- Bufset (List.append b [create n]);
     bs.capacity <- bs.capacity + n
+
 
 let rec blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
   if src_idx >= 0 && len >= 0 && src_idx + len <= Bytes.length src && dst_idx >= 0 
@@ -232,6 +235,7 @@ let rec blit ~src ~src_idx ~dst ~dst_idx ~len =
       | n -> expand n dst; blit ~src ~src_idx ~dst ~dst_idx ~len
   else raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.blit"))
 
+
 let rec get_byte ~at bs =
   if at >= 0 && at + 1 <= capacity bs then
     begin
@@ -260,7 +264,10 @@ let get_bigstring ~at len bs =
   let dst = Bigstringaf.create len in
   blit_to_bigstring ~src:bs ~src_idx:at ~dst ~dst_idx:0 ~len ; dst 
 
-let get_abytes ~at len bs = from_bigstring @@ get_bigstring ~at len bs
+let get_abytes ~at len bs = 
+  let dst = create len in
+  blit ~src:bs ~src_idx:at ~dst ~dst_idx:0 ~len ; dst 
+
 
 let rec set_byte c ~at bs = 
   if at >= 0 then 

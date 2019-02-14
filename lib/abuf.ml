@@ -51,6 +51,8 @@ let create_bytes ?(grow=0) len =
     w_mark = 0;
   }
 
+let create = create_bigstring
+
 let wrap ?(grow=0) bslist = 
   let abytes = Abytes.wrap ~grow @@ List.map (fun buf -> Abytes.slice buf.r_pos (buf.w_pos - buf.r_pos) buf.buffer) bslist in
   { 
@@ -75,6 +77,7 @@ let slice from len buf =
 let capacity buf = Abytes.capacity buf.buffer
 
 let clear buf = buf.r_pos <- 0; buf.w_pos <- 0
+
 
 let r_pos buf = buf.r_pos
 
@@ -112,6 +115,7 @@ let writable buf = writable_bytes buf > 0
 
 let skip n buf = set_r_pos (buf.r_pos + n) buf 
 
+
 let blit ~src ~src_idx ~dst ~dst_idx ~len = 
   Abytes.blit ~src:src.buffer ~src_idx ~dst:dst.buffer ~dst_idx ~len
 
@@ -137,7 +141,6 @@ let blit_to_abytes ~src ~src_idx ~dst ~dst_idx ~len =
 let read_byte buf = 
   let b = Abytes.get_byte ~at:buf.r_pos buf.buffer in 
   buf.r_pos <- buf.r_pos+1 ; b
-  
 
 let read_bytes len buf = 
   let bs = Abytes.get_bytes ~at:buf.r_pos len buf.buffer in 
@@ -146,15 +149,13 @@ let read_bytes len buf =
 let read_abytes len buf = 
   let bs = Abytes.get_abytes ~at:buf.r_pos len buf.buffer in 
   buf.r_pos <- buf.r_pos+len; bs
-  
 
 let read_bigstring len buf = 
   let bs = Abytes.get_bigstring ~at:buf.r_pos len buf.buffer in 
   buf.r_pos <- buf.r_pos+len ; bs
-  
 
 let read_buf len buf = 
-  let bs = from_bigstring @@ Abytes.get_bigstring ~at:buf.r_pos len buf.buffer in 
+  let bs = from_abytes @@ Abytes.get_abytes ~at:buf.r_pos len buf.buffer in
   buf.r_pos <- buf.r_pos+len; bs
    
 
@@ -180,14 +181,13 @@ let get_bigstring ~at len buf =
 
 let get_buf ~at len buf = 
   if at + len <= buf.w_pos
-  then from_bigstring @@ Abytes.get_bigstring ~at len buf.buffer     
+  then from_abytes @@ Abytes.get_abytes ~at len buf.buffer
   else raise @@ Atypes.Exception (`OutOfBounds (`Msg "A_buf.get_buf"))
 
 
 let write_byte b buf = 
   Abytes.set_byte b ~at:buf.w_pos buf.buffer ;
   buf.w_pos <- buf.w_pos+1
-  
 
 let write_bytes bs buf = 
   Abytes.set_bytes ~at:buf.w_pos bs buf.buffer ;
@@ -204,6 +204,7 @@ let write_bigstring bs buf =
 let write_buf bs buf = 
   Abytes.blit ~src:bs.buffer ~src_idx:bs.r_pos ~dst:buf.buffer ~dst_idx:buf.w_pos ~len:(readable_bytes bs);
   buf.w_pos <- buf.w_pos+(readable_bytes bs)
+
 
 let set_byte b ~at buf = Abytes.set_byte b ~at buf.buffer 
   
