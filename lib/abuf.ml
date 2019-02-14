@@ -202,8 +202,8 @@ let write_bigstring bs buf =
   buf.w_pos <- buf.w_pos+(Bigstringaf.length bs)
   
 let write_buf bs buf = 
-  Abytes.set_abytes ~at:buf.w_pos bs.buffer buf.buffer ;
-  buf.w_pos <- buf.w_pos+(capacity bs)
+  Abytes.blit ~src:bs.buffer ~src_idx:bs.r_pos ~dst:buf.buffer ~dst_idx:buf.w_pos ~len:(readable_bytes bs);
+  buf.w_pos <- buf.w_pos+(readable_bytes bs)
 
 let set_byte b ~at buf = Abytes.set_byte b ~at buf.buffer 
   
