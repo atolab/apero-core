@@ -81,7 +81,7 @@ let r_pos buf = buf.r_pos
 let set_r_pos i buf = 
   if i >= 0 && i <= buf.w_pos
   then buf.r_pos <- i
-  else raise @@ Apero.Exception (`OutOfBounds (`Msg (
+  else raise @@ Atypes.Exception (`OutOfBounds (`Msg (
     Printf.sprintf "A_buf.set_r_pos with %d out of (0 .. %d)" i buf.w_pos)))
 
 let mark_r_pos buf = buf.r_mark <- buf.r_pos
@@ -93,7 +93,7 @@ let w_pos buf = buf.w_pos
 let set_w_pos i buf = 
   if i >= buf.r_pos && i <= capacity buf
   then buf.w_pos <-  i
-  else raise @@ Apero.Exception (`OutOfBounds (`Msg (
+  else raise @@ Atypes.Exception (`OutOfBounds (`Msg (
     Printf.sprintf "A_buf.set_w_pos with %d out of (%d .. %d)" i buf.r_pos (capacity buf))))
 
 let mark_w_pos buf = buf.w_mark <- buf.w_pos
@@ -161,27 +161,27 @@ let read_buf len buf =
 let get_byte ~at buf =
   if at + 1 <= buf.w_pos 
   then Abytes.get_byte ~at buf.buffer
-  else raise @@ Apero.Exception (`OutOfBounds (`Msg "A_buf.get_byte"))
+  else raise @@ Atypes.Exception (`OutOfBounds (`Msg "A_buf.get_byte"))
 
 let get_bytes ~at len buf = 
   if at + len <= buf.w_pos 
   then Abytes.get_bytes ~at len buf.buffer
-  else raise @@ Apero.Exception (`OutOfBounds (`Msg "A_buf.get_bytes"))
+  else raise @@ Atypes.Exception (`OutOfBounds (`Msg "A_buf.get_bytes"))
 
 let get_abytes ~at len buf = 
   if at + len <= buf.w_pos 
   then Abytes.get_abytes ~at len buf.buffer
-  else raise @@ Apero.Exception (`OutOfBounds (`Msg "A_buf.get_abytes"))
+  else raise @@ Atypes.Exception (`OutOfBounds (`Msg "A_buf.get_abytes"))
 
 let get_bigstring ~at len buf = 
   if at + len <= buf.w_pos
   then Abytes.get_bigstring ~at len buf.buffer
-  else raise @@ Apero.Exception (`OutOfBounds (`Msg "A_buf.get_bigstring"))
+  else raise @@ Atypes.Exception (`OutOfBounds (`Msg "A_buf.get_bigstring"))
 
 let get_buf ~at len buf = 
   if at + len <= buf.w_pos
   then from_bigstring @@ Abytes.get_bigstring ~at len buf.buffer     
-  else raise @@ Apero.Exception (`OutOfBounds (`Msg "A_buf.get_buf"))
+  else raise @@ Atypes.Exception (`OutOfBounds (`Msg "A_buf.get_buf"))
 
 
 let write_byte b buf = 
