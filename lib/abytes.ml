@@ -322,4 +322,4 @@ let hexdump ?separator:(sep="") bs =
   hexdump bs 0
     
 let to_string bs =
-  "(capacity: " ^ (string_of_int bs.capacity) ^ " content: " ^ (hexdump bs ~separator:":") 
+  "(capacity: " ^ (string_of_int bs.capacity) ^ " content: " ^ (hexdump bs ~separator:":") ^ ")"
