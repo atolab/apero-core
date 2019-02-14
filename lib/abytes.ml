@@ -53,7 +53,7 @@ let wrap ?(grow=0) bslist =
   }
 
 let slice from len bs = 
-  if from > 0 && len > 0 && (from + len) <= bs.capacity  then
+  if from >= 0 && len >= 0 && (from + len) <= bs.capacity  then
     { 
       id = Id.next_id ();
       buffer = bs.buffer;
