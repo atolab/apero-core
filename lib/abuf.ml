@@ -216,11 +216,8 @@ let set_bigstring bs ~at buf = Abytes.set_bigstring bs ~at buf.buffer
 let set_buf bs ~at buf = Abytes.set_abytes bs.buffer ~at buf.buffer 
 
 
-let readable_to_io_vecs ~append_bytes ~append_bigarray io_vecs buf = 
-  Abytes.to_io_vecs ~offset:(r_pos buf) ~len:(readable_bytes buf) ~append_bytes ~append_bigarray io_vecs buf.buffer
-
-let writable_to_io_vecs ~append_bytes ~append_bigarray io_vecs buf = 
-  Abytes.to_io_vecs ~offset:(w_pos buf) ~len:(writable_bytes buf) ~append_bytes ~append_bigarray io_vecs buf.buffer
+let to_io_vecs ~idx ~len ~append_bytes ~append_bigarray io_vecs buf = 
+  Abytes.to_io_vecs ~idx ~len ~append_bytes ~append_bigarray io_vecs buf.buffer
 
 
 let hexdump ?separator:(sep="") buf = Abytes.hexdump ~separator:sep buf.buffer
