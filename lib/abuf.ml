@@ -51,7 +51,10 @@ let create_bytes ?(grow=0) len =
     w_mark = 0;
   }
 
-let create = create_bigstring
+let create ?(grow=0) len = 
+  if len < 2048 
+  then create_bytes ~grow len
+  else create_bigstring ~grow len
 
 let duplicate buf =
   {

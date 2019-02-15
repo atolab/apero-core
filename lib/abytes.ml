@@ -41,7 +41,10 @@ let create_bigstring ?(grow=0) len = from_bigstring ~grow (Bigstringaf.create le
 
 let create_bytes ?(grow=0) len = from_bytes ~grow (Bytes.create len)
 
-let create = create_bigstring
+let create ?(grow=0) len = 
+  if len < 2048 
+  then create_bytes ~grow len
+  else create_bigstring ~grow len
 
 let capacity bs = bs.capacity
 
