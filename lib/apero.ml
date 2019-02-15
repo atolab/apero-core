@@ -63,22 +63,6 @@ let encode_bytes src dst =
 let decode_bytes buf =
   let len = decode_vle buf in
   Abuf.read_buf (Vle.to_int len) buf
-
-let wrap_bytes src dst =
-  let n = Abuf.readable_bytes src in
-  let m = Abuf.writable_bytes dst in
-  if n <= m then
-    begin
-      encode_vle (Vle.of_int n) dst;
-      Abuf.blit ~src ~src_idx:(Abuf.r_pos src) ~dst ~dst_idx:(Abuf.w_pos dst) ~len:(Abuf.readable_bytes src);
-      Abuf.set_w_pos (Abuf.w_pos dst + Abuf.readable_bytes src) dst
-    end
-    else      
-        raise @@ Exception (`OutOfBounds (`Msg (Printf.sprintf "encode_bytes failed because of bounds error %d < %d" n m)))    
-
-let slice_bytes buf =
-  let len = decode_vle buf in
-  Abuf.read_buf (Vle.to_int len) buf
       
 
 let encode_string s buf =
