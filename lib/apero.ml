@@ -15,191 +15,174 @@ module Stringable = Stringable
 module EventStream = Event_stream.EventStream.Make(Stream_lwt.Stream)
 
 
-
 open Result
-open Result.Infix
+
 let encode_vle ?size v buf =
   let to_char l = char_of_int @@ Int64.to_int l in
-  let rec put_positive_vle_rec v' ?size' buf =
+  let rec put_positive_vle_rec ?size' v' =
     match size', v' with
-    | Some(0), _ -> fail (`OutOfBounds (`Msg (Printf.sprintf "encode_vle: cannot encode %Ld as a %d bytes VLE" v (Option.get size))))
-    | None, v' when v' <= Vle.byte_mask -> IOBuf.put_char (to_char v') buf
-    | Some(1), v' when v' <= Vle.byte_mask -> IOBuf.put_char (to_char v') buf
+    | Some(0), _ -> raise @@ Exception(`OutOfBounds (`Msg (Printf.sprintf "encode_vle: cannot encode %Ld as a %d bytes VLE" v (Option.get size))))
+    | None, v' when v' <= Vle.byte_mask -> Abuf.write_byte (to_char v') buf
+    | Some(1), v' when v' <= Vle.byte_mask -> Abuf.write_byte (to_char v') buf
     | _, v' ->
       let mv = Int64.logor Vle.more_bytes_flag @@ Int64.logand v' Vle.byte_mask in
-      let b = IOBuf.put_char (to_char mv) buf in
+      Abuf.write_byte (to_char mv) buf;
       let sv = Int64.shift_right v' Vle.shift_len in
       let size' = Option.map size' (fun s -> s-1) in
-      b >>= put_positive_vle_rec sv ?size'
+      put_positive_vle_rec sv ?size'
   in
-  if v < 0L then fail (`OutOfRange (`Msg "encode_vle: integer to encode must be positive"))
-  else put_positive_vle_rec v ?size':size buf
+  if v < 0L then raise @@ Exception(`OutOfRange (`Msg "encode_vle: integer to encode must be positive"))
+  else put_positive_vle_rec v ?size':size
 
 let decode_vle buf =
   let from_char c = Vle.of_int (int_of_char c) in
   let masked_from_char c = Vle.logand Vle.byte_mask  (Vle.of_int (int_of_char c)) in
   let merge v c n = Vle.logor v (Vle.shift_left c (n * Vle.shift_len)) in
-  let rec decode_vle_rec  v n buf =
+  let rec decode_vle_rec  v n =
     if n < Vle.max_bytes then
       begin
-        IOBuf.get_char buf
-        >>= (fun (c, buf) -> 
-          if (from_char c) <= Vle.byte_mask then  return ((merge v (masked_from_char c) n), buf)
-          else decode_vle_rec (merge v (masked_from_char c) n) (n+1) buf
-        )        
+        let c = Abuf.read_byte buf in
+        if (from_char c) <= Vle.byte_mask then ((merge v (masked_from_char c) n))
+        else decode_vle_rec (merge v (masked_from_char c) n) (n+1)      
       end
     else
       begin
         let rec skip k buf =
-          IOBuf.get_char buf
-          >>= (fun (c, buf)  -> 
-          if from_char c <= Vle.byte_mask then fail (`OutOfBounds (`Msg "vle out of bounds"))
-          else skip (k+1) buf )
+          let c = Abuf.read_byte buf in
+          if from_char c <= Vle.byte_mask then raise @@ Exception(`OutOfBounds (`Msg "vle out of bounds"))
+          else skip (k+1) buf 
         in skip n buf
       end
-  in decode_vle_rec 0L 0 buf
+  in decode_vle_rec 0L 0
 
 let encode_bytes src dst =
-  Logs.debug (fun m -> m "Encoding Bytes");
-  let n = IOBuf.available src in
-  let m = IOBuf.available dst in
+  let n = Abuf.readable_bytes src in
+  encode_vle (Vle.of_int n) dst;
+  Abuf.write_buf src dst 
+
+let decode_bytes buf =
+  let len = decode_vle buf in
+  Abuf.read_buf (Vle.to_int len) buf
+
+let wrap_bytes src dst =
+  let n = Abuf.readable_bytes src in
+  let m = Abuf.writable_bytes dst in
   if n <= m then
     begin
-      encode_vle (Vle.of_int n) dst 
-      >>= (IOBuf.put_buf src)      
+      encode_vle (Vle.of_int n) dst;
+      Abuf.blit ~src ~src_idx:(Abuf.r_pos src) ~dst ~dst_idx:(Abuf.w_pos dst) ~len:(Abuf.readable_bytes src);
+      Abuf.set_w_pos (Abuf.w_pos dst + Abuf.readable_bytes src) dst
     end
     else      
-        fail (`OutOfBounds (`Msg (Printf.sprintf "encode_bytes failed because of bounds error %d < %d" n m)))    
+        raise @@ Exception (`OutOfBounds (`Msg (Printf.sprintf "encode_bytes failed because of bounds error %d < %d" n m)))    
 
-  let decode_bytes buf =
-    decode_vle buf
-    >>= (fun (len, buf) -> IOBuf.get_buf (Vle.to_int len) buf)
+let slice_bytes buf =
+  let len = decode_vle buf in
+  Abuf.read_buf (Vle.to_int len) buf
       
-  
 
 let encode_string s buf =
   let len = String.length s in
-  let bs = Lwt_bytes.of_string s in
-  encode_vle (Vle.of_int len) buf
-  >>= (IOBuf.blit_from_bytes bs 0 len)
+  let bs = Bytes.unsafe_of_string s in
+  encode_vle (Vle.of_int len) buf;
+  Abuf.write_bytes bs buf
     
 let decode_string buf =
-  decode_vle buf
-  >>= (fun (vlen, buf) -> 
-    let len =  Vle.to_int vlen in    
-    IOBuf.blit_to_bytes len buf 
-    >>= (fun (bs, buf) -> return (Lwt_bytes.to_string bs, buf)))
+  let vlen = decode_vle buf in
+  let len =  Vle.to_int vlen in    
+  Abuf.read_bytes len buf
+  |> Bytes.unsafe_to_string
     
 
 let decode_seq read buf  =
-  let rec get_remaining seq length buf =
+  let rec get_remaining seq length =
     match length with
-    | 0 -> return (seq, buf)
+    | 0 -> seq
     | _ ->
-      read buf 
-      >>= (fun (value, buf) -> get_remaining (value :: seq) (length - 1) buf)
+      let value = read buf in
+      get_remaining (value :: seq) (length - 1)
   in
-  decode_vle buf
-  >>= (fun (length, buf) ->    
-    (get_remaining  [] (Vle.to_int length) buf))
+  let length = decode_vle buf in 
+  get_remaining  [] (Vle.to_int length)
 
 let encode_seq write seq buf =
-  let rec put_remaining seq buf =
+  let rec put_remaining seq =
     match seq with
-    | [] -> return buf
+    | [] -> ()
     | head :: rem -> 
-        write head buf 
-        >>= put_remaining rem 
+      write head buf;
+      put_remaining rem 
   in
-    (encode_vle (Vle.of_int (List.length seq)) buf)
-    >>= put_remaining seq
+  encode_vle (Vle.of_int (List.length seq)) buf;
+  put_remaining seq 
 
 let encode_seq_safe write seq buf =
-  let rec put_remaining seq n buf =
+  let rec put_remaining seq n =
     if (n = 0x3FFF) then
       (* note: 0x3FFF is the biggest length we can encode in a 2-bytes vle *)
-      (buf, n, seq)
+      (n, seq)
     else match seq with
-    | [] -> (buf, n, [])
+    | [] -> (n, [])
     | head :: rem ->
-      let buf = IOBuf.mark buf in
-      match write head buf with
-      | Ok buf -> put_remaining rem (n+1) buf
-      | Error _ -> (IOBuf.reset buf, n, seq)
+      Abuf.mark_w_pos buf;
+      try write head buf; put_remaining rem (n+1)
+      with _ -> Abuf.reset_w_pos buf; (n, seq)
   in
   (* reserve space for seq length as a 2-bytes vle *)
-  let length_pos = IOBuf.position buf in
-  (encode_vle ~size:2 0L buf)
-  >>> put_remaining seq 0
-  >>= fun (buf, n, remain) -> IOBuf.overwrite_at length_pos (encode_vle ~size:2 (Vle.of_int n)) buf
-  >>> fun buf -> (buf, remain)
+  let length_pos = Abuf.w_pos buf in
+  encode_vle ~size:2 0L buf;
+  put_remaining seq 0 |> fun (n, remain) -> 
+  Abuf.mark_w_pos buf;
+  Abuf.set_w_pos length_pos buf;
+  encode_vle ~size:2 (Vle.of_int n) buf;
+  Abuf.reset_w_pos buf;
+  remain
 
 let read1_spec log p1 c buf =    
   log ;
   p1 buf 
-  >>= (fun (a1, buf) -> 
-      return ((c a1),buf))
+  |> fun a1 -> c a1
 
 let read2_spec log p1 p2 c buf =   
   log ;
   p1 buf 
-  >>= (fun (a1, buf) -> 
-    p2 buf 
-    >>= (fun (a2, buf) ->
-      return ((c a1 a2),buf)))
+  |> fun a1 -> p2 buf 
+    |> fun a2 -> c a1 a2
 
 let read3_spec log p1 p2 p3 c buf = 
   log ;
   p1 buf 
-  >>= (fun (a1, buf) -> 
-    p2 buf 
-    >>= (fun (a2, buf) ->
-      p3 buf 
-      >>= (fun (a3, buf) ->
-      return ((c a1 a2 a3),buf))))
+  |> fun a1 -> p2 buf 
+    |> fun a2 -> p3 buf 
+      |> fun a3 -> c a1 a2 a3
 
 let read4_spec log p1 p2 p3 p4 c buf = 
   log ;
   p1 buf 
-  >>= (fun (a1, buf) -> 
-    p2 buf 
-    >>= (fun (a2, buf) ->
-      p3 buf 
-      >>= (fun (a3, buf) ->
-        p4 buf 
-        >>= (fun (a4, buf) ->
-        return ((c a1 a2 a3 a4),buf)))))
+  |> fun a1 -> p2 buf 
+    |> fun a2 -> p3 buf 
+      |> fun a3 -> p4 buf 
+        |> fun a4 -> c a1 a2 a3 a4
 
 let read5_spec log p1 p2 p3 p4 p5 c buf = 
   log ;
   p1 buf 
-  >>= (fun (a1, buf) -> 
-    p2 buf 
-    >>= (fun (a2, buf) ->
-      p3 buf 
-      >>= (fun (a3, buf) ->
-        p4 buf 
-        >>= (fun (a4, buf) ->
-          p5 buf 
-          >>= (fun (a5, buf) ->
-        return ((c a1 a2 a3 a4 a5),buf))))))
+  |> fun a1 -> p2 buf 
+    |> fun a2 -> p3 buf 
+      |> fun a3 -> p4 buf 
+        |> fun a4 -> p5 buf 
+          |> fun a5 -> c a1 a2 a3 a4 a5
 
 
 let read6_spec log p1 p2 p3 p4 p5 p6 c buf = 
   log ;
   p1 buf 
-  >>= (fun (a1, buf) -> 
-    p2 buf 
-    >>= (fun (a2, buf) ->
-      p3 buf 
-      >>= (fun (a3, buf) ->
-        p4 buf 
-        >>= (fun (a4, buf) ->
-          p5 buf 
-          >>= (fun (a5, buf) ->
-            p6 buf 
-            >>= (fun (a6, buf) ->
-          return ((c a1 a2 a3 a4 a5 a6),buf)))))))
+  |> fun a1 -> p2 buf 
+    |> fun a2 -> p3 buf 
+      |> fun a3 -> p4 buf 
+        |> fun a4 -> p5 buf 
+          |> fun a5 -> p6 buf 
+            |> fun a6 -> c a1 a2 a3 a4 a5 a6
 
 let lwt_of_result = function 
 | Ok v -> Lwt.return v
