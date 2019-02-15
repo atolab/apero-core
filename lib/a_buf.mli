@@ -167,7 +167,6 @@ val set_buf : t -> at:int -> t -> (t, error) result
 (** [set_buf bs ~at buf] sets the bytes [bs] in [buf] at index [at]. *)
 
 
-<<<<<<< HEAD
 val blit : src:t -> src_idx:int -> dst:t -> dst_idx:int -> len:int -> (unit, error) result 
 (** [blit ~src ~src_idx ~dst ~dst_idx ~len] copies [len] bytes from [src] at index [src_idx] 
     to [dst] at index [dst_idx]. *)
@@ -194,14 +193,6 @@ val blit_from_a_bytes : src:A_bytes.t -> src_idx:int -> dst:t -> dst_idx:int -> 
 
 val blit_to_a_bytes : src:t -> src_idx:int -> dst:A_bytes.t -> dst_idx:int -> len:int -> (unit, error) result 
 (** [blit_to_a_bytes ~src ~src_idx ~dst ~dst_idx ~len] copies [len] bytes from [src] at index [src_idx] 
-=======
-val blit_from_bytes : src:Bigstringaf.t -> src_idx:int -> dst:t -> dst_idx:int -> len:int -> (unit, error) result 
-(** [blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len] copies [len] bytes from [src] at index [src_idx] 
-    to [dst] at index [dst_idx]. *)
-
-val blit_to_bytes : src:t -> src_idx:int -> dst:Bigstringaf.t -> dst_idx:int -> len:int -> (unit, error) result 
-(** [blit_to_bytes ~src ~src_idx ~dst ~dst_idx ~len] copies [len] bytes from [src] at index [src_idx] 
->>>>>>> A_buf uses blit_from_bytes/blit_to_bytes instead of copy_from/copy_to
     to [dst] at index [dst_idx]. *)
 
 
