@@ -25,20 +25,27 @@ val from_bigstring : ?grow:int -> bigstring -> t
 (** [from_bigstring bs] creates an Abuf by wrapping [bs].
     The resulting Abuf writer position will be set to the length of [bs]. *)
 
+val duplicate : t -> t
+(** [duplicate buf] Returns an Abuf which shares the whole region of [buf]. 
+    This operation involves NO COPY. Modifying the content of the returned 
+    buffer or of [buf] affects each other's content while they maintain separate 
+    positions and marks. This method does not modify the positions of [buf]. *)
+
 val wrap : ?grow:int -> t list -> t
 (** [wrap bs] creates an Abuf by wrapping the Abufs in the list [bs].
     The capacity for the Abuf will be set to the sum of the readable_bytes 
     of the Abufs in the list [bs].
-    This operation involves NO COPY. Modifications on the resulting 
-    Abuf will modify the original Abufs in the list [bs] and reverse. *)
+    This operation involves NO COPY. Modifying the content of the returned 
+    buffer or of [buf] affects each other's content while they maintain 
+    separate positions and marks. *)
 
 val slice : int -> int -> t -> t
 (** [slice from len buf] creates an Abuf that wraps the subregion 
     of buffer [buf] of length [len] starting at index [from]. 
-    This operation involves NO COPY. Modifications on the resulting 
-    buffer will modify the original [buf] and reverse. 
-    The resulting buffer is not expandable. It's reader position and 
-    writer position are set to 0. *)
+    This operation involves NO COPY. Modifying the content of the returned 
+    buffer or of [buf] affects each other's content while they maintain 
+    separate positions and marks. The resulting buffer is not expandable. 
+    It's reader position and writer position are set to 0. *)
 
 val capacity : t -> int
 (** [capacity buf] returns the number of bytes (octets) the buffer 

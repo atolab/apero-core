@@ -42,7 +42,7 @@ let create_bigstring ?(grow=0) len =
   }
 
 let create_bytes ?(grow=0) len =
-  { 
+  {
     id = Id.next_id ();
     buffer = Abytes.create_bytes ~grow len;
     r_pos = 0;
@@ -52,6 +52,17 @@ let create_bytes ?(grow=0) len =
   }
 
 let create = create_bigstring
+
+let duplicate buf =
+  {
+    id = buf.id;
+    buffer =  buf.buffer;
+    r_pos = buf.r_pos;
+    w_pos = buf.w_pos;
+    r_mark = buf.r_mark;
+    w_mark = buf.w_mark;
+
+  }
 
 let wrap ?(grow=0) bslist = 
   let abytes = Abytes.wrap ~grow @@ List.map (fun buf -> Abytes.slice buf.r_pos (buf.w_pos - buf.r_pos) buf.buffer) bslist in
