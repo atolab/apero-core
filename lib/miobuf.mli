@@ -55,6 +55,9 @@ module MIOBuf : sig
   val reset : t -> unit
   val reset_with : int -> int -> t -> unit
 
+  val put_byte : int -> t -> unit
+  val get_byte : t -> int
+  
   val put_char : char -> t ->  unit
   val get_char : t -> char
 

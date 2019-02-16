@@ -1,4 +1,4 @@
-open Apero
+open Identifiers
 
 module MIOBuf = struct
 
@@ -68,7 +68,7 @@ module MIOBuf = struct
   let set_position pos buf  =
     if pos >=0 && pos <= buf.limit
     then  buf.pos <- pos 
-    else raise @@ Apero.Exception (`OutOfBounds (`Msg (Printf.sprintf "IOBuf.set_position with %d > %d" pos buf.limit)))
+    else raise @@ Atypes.Exception (`OutOfBounds (`Msg (Printf.sprintf "IOBuf.set_position with %d > %d" pos buf.limit)))
 
   let set_position_unsafe pos buf =  buf.pos <- pos 
 
@@ -79,7 +79,7 @@ module MIOBuf = struct
   let set_limit lim buf  =
     if lim >= buf.pos && lim <= buf.capacity
     then   buf.limit <- lim
-    else raise @@ Apero.Exception (`OutOfBounds (`Msg (Printf.sprintf "IOBuf.set_limit with %d > %d" lim buf.capacity)))
+    else raise @@ Atypes.Exception (`OutOfBounds (`Msg (Printf.sprintf "IOBuf.set_limit with %d > %d" lim buf.capacity)))
 
 
   let reset_with pos lim buf =
@@ -94,10 +94,8 @@ module MIOBuf = struct
       end
     else
       match buf.grow with 
-      | 0 -> raise @@ Apero.Exception (`OutOfBounds (`Msg "IOBuf.put_char"))
+      | 0 -> raise @@ Atypes.Exception (`OutOfBounds (`Msg "IOBuf.put_char"))
       | n -> put_char c (expand_buf buf n)
-
-
 
   let get_char buf =
     if buf.pos < buf.limit then
@@ -106,8 +104,12 @@ module MIOBuf = struct
         buf.pos <- buf.pos + 1 ; c        
       end
     else 
-      raise @@ Apero.Exception (`OutOfBounds (`Msg "IOBuf.get_char"))
+      raise @@ Atypes.Exception (`OutOfBounds (`Msg "IOBuf.get_char"))
 
+  let put_byte b buf = put_char (char_of_int b) buf
+    
+  let get_byte buf = int_of_char @@ get_char buf
+  
   let rec blit_from_bytes bs ofs len  buf =
     if buf.pos + len < buf.limit then
       begin
@@ -116,7 +118,7 @@ module MIOBuf = struct
       end
     else
       match buf.grow with 
-      | 0 -> raise @@ Apero.Exception (`OutOfBounds (`Msg "IOBuf.blit_from_bytes"))
+      | 0 -> raise @@ Atypes.Exception (`OutOfBounds (`Msg "IOBuf.blit_from_bytes"))
       | n -> blit_from_bytes bs ofs len (expand_buf buf n)
 
 
@@ -129,7 +131,7 @@ module MIOBuf = struct
       ; bs
       end
     else 
-      raise @@ Apero.Exception (`OutOfBounds (`Msg "IOBuf.blit_to_bytes"))
+      raise @@ Atypes.Exception (`OutOfBounds (`Msg "IOBuf.blit_to_bytes"))
 
 
 
@@ -143,7 +145,7 @@ module MIOBuf = struct
       end
     else
       match buf.grow with 
-      | 0 -> raise @@ Apero.Exception (`OutOfBounds (`Msg (Printf.sprintf "IOBuf.put len: %d available %d" len (available buf)) ))
+      | 0 -> raise @@ Atypes.Exception (`OutOfBounds (`Msg (Printf.sprintf "IOBuf.put len: %d available %d" len (available buf)) ))
       | n -> put_buf src (expand_buf buf n)
 
 
@@ -155,7 +157,7 @@ module MIOBuf = struct
     ; buf.pos <- buf.pos + len
     ; dst
     else
-      raise @@ Apero.Exception (`OutOfBounds (`Msg (Printf.sprintf "IOBuf.get_buf len: %d available %d" len (available buf)) ))
+      raise @@ Atypes.Exception (`OutOfBounds (`Msg (Printf.sprintf "IOBuf.get_buf len: %d available %d" len (available buf)) ))
 
 
   let rec put_string s buf =
@@ -167,7 +169,7 @@ module MIOBuf = struct
       end
     else
       match buf.grow with
-      | 0 -> raise @@ Apero.Exception (`OutOfBounds (`Msg (Printf.sprintf "IOBuf.put len: %d available %d" len (available buf)) ))
+      | 0 -> raise @@ Atypes.Exception (`OutOfBounds (`Msg (Printf.sprintf "IOBuf.put len: %d available %d" len (available buf)) ))
       | n -> put_string s (expand_buf buf n)
 
 
@@ -181,7 +183,7 @@ module MIOBuf = struct
       ; Bytes.to_string s
       end
     else
-      raise @@ Apero.Exception (`OutOfBounds (`Msg (Printf.sprintf "IOBuf.get_string len: %d available %d" len (available buf)) ))
+      raise @@ Atypes.Exception (`OutOfBounds (`Msg (Printf.sprintf "IOBuf.get_string len: %d available %d" len (available buf)) ))
 
   let overwrite_at pos (f:t -> unit) buf =
     let init_pos = position buf in
