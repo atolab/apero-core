@@ -13,6 +13,11 @@ val create_bytes : ?grow:int -> int -> t
 val create_bigstring : ?grow:int -> int -> t
 (** [create_bigstring c] allocates a new Abytes of bigstring and of capacity [c]. *)
 
+val duplicate : t -> t
+(** [duplicate bs] Returns an Abytes which shares the whole region of [bs]. 
+    This operation involves NO COPY. Modifying the content of the returned 
+    Abytes or of [bs] affects each other's content. *)
+
 val from_bytes : ?grow:int -> bytes -> t 
 (** [from_bytes bs] creates an Abytes by wrapping [bs].
     The capacity for the Abytes will be set to the length of [bs]. *)

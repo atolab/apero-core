@@ -46,6 +46,15 @@ let create ?(grow=0) len =
   then create_bytes ~grow len
   else create_bigstring ~grow len
 
+let duplicate bs = 
+  { 
+    id = bs.id;
+    buffer = bs.buffer;
+    offset = bs.offset;
+    capacity = bs.capacity;
+    grow = bs.grow;
+  }
+
 let capacity bs = bs.capacity
 
 let wrap ?(grow=0) bslist = 
@@ -72,10 +81,12 @@ let slice from len bs =
 let expand n bs = 
   match bs.buffer with 
   | Bytes _ -> 
-    bs.buffer <- Bufset [bs; create_bytes n];
+    let hd = duplicate bs in 
+    bs.buffer <- Bufset [hd; create_bytes n];
     bs.capacity <- bs.capacity + n
   | Bigstr _ -> 
-    bs.buffer <- Bufset [bs; create_bigstring n];
+    let hd = duplicate bs in 
+    bs.buffer <- Bufset [hd; create_bigstring n];
     bs.capacity <- bs.capacity + n
   | Bufset b -> 
     bs.buffer <- Bufset (List.append b [create n]);
@@ -103,7 +114,7 @@ let rec blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len =
               else 
                 begin 
                   blit_from_bytes ~src ~src_idx ~dst:hd ~dst_idx ~len:hd_writable ;                   
-                  blit_from_bytes_to_set ~src ~src_idx:(src_idx - hd_writable) ~dst:tl ~dst_idx:0 ~len:(len - hd_writable)                  
+                  blit_from_bytes_to_set ~src ~src_idx:(src_idx + hd_writable) ~dst:tl ~dst_idx:0 ~len:(len - hd_writable)
                 end
             else 
               blit_from_bytes_to_set ~src ~src_idx ~dst:tl ~dst_idx:(dst_idx - capacity hd) ~len
@@ -164,7 +175,7 @@ let rec blit_from_bigstring ~src ~src_idx ~dst ~dst_idx ~len =
               else 
                 begin 
                   blit_from_bigstring ~src ~src_idx ~dst:hd ~dst_idx ~len:hd_writable ;
-                  blit_from_bigstring_to_set ~src ~src_idx:(src_idx - hd_writable) ~dst:tl ~dst_idx:0 ~len:(len - hd_writable)
+                  blit_from_bigstring_to_set ~src ~src_idx:(src_idx + hd_writable) ~dst:tl ~dst_idx:0 ~len:(len - hd_writable)
                 end
             else 
               blit_from_bigstring_to_set ~src ~src_idx ~dst:tl ~dst_idx:(dst_idx - capacity hd) ~len
@@ -307,21 +318,28 @@ let set_abytes src ~at bs =
   blit ~src ~src_idx:0 ~dst:bs ~dst_idx:at ~len:(capacity src) 
 
 let rec to_io_vecs ~idx ~len ~append_bytes ~append_bigarray io_vecs bs = 
-  match bs.buffer with 
-  | Bytes b -> append_bytes io_vecs b (bs.offset + idx) len 
-  | Bigstr b -> append_bigarray io_vecs b (bs.offset + idx) len 
-  | Bufset b -> 
-    let rec set_to_io_vecs ~idx ~len ~append_bytes ~append_bigarray io_vecs b = match b with 
-    | [] -> ()
-    | hd :: tl -> 
-      if capacity hd >= idx
-      then 
-        let fst_len = min (len) (capacity hd - idx) in
-        to_io_vecs ~idx ~len:fst_len  ~append_bytes ~append_bigarray io_vecs hd; 
-        set_to_io_vecs ~idx:0 ~len:(len - fst_len) ~append_bytes ~append_bigarray io_vecs tl; 
-      else 
-        set_to_io_vecs ~idx:(idx - capacity hd) ~len ~append_bytes ~append_bigarray io_vecs tl in 
-    set_to_io_vecs  ~idx ~len ~append_bytes ~append_bigarray io_vecs b
+  if capacity bs >= idx + len 
+  then 
+    match bs.buffer with 
+    | Bytes b -> append_bytes io_vecs b (bs.offset + idx) len 
+    | Bigstr b -> append_bigarray io_vecs b (bs.offset + idx) len 
+    | Bufset b -> 
+      let rec set_to_io_vecs ~idx ~len ~append_bytes ~append_bigarray io_vecs b = match b with 
+      | [] -> ()
+      | hd :: tl -> 
+        if capacity hd >= idx
+        then 
+          let fst_len = min (len) (capacity hd - idx) in
+          to_io_vecs ~idx ~len:fst_len  ~append_bytes ~append_bigarray io_vecs hd; 
+          set_to_io_vecs ~idx:0 ~len:(len - fst_len) ~append_bytes ~append_bigarray io_vecs tl; 
+        else 
+          set_to_io_vecs ~idx:(idx - capacity hd) ~len ~append_bytes ~append_bigarray io_vecs tl in 
+      set_to_io_vecs  ~idx ~len ~append_bytes ~append_bigarray io_vecs b
+  else 
+    match bs.grow with 
+    | 0 -> raise @@ Atypes.Exception (`OutOfBounds (`Msg "Abytes.to_io_vecs"))
+    | n -> expand n bs; to_io_vecs ~idx ~len ~append_bytes ~append_bigarray io_vecs bs
+    
 
 
 let hexdump ?separator:(sep="") bs =
