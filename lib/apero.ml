@@ -15,10 +15,6 @@ module Stringable = Stringable
 module EventStream = Event_stream.EventStream.Make(Stream_lwt.Stream)
 
 
-
-open Result
-open Result.Infix
-
 let rec fast_encode_vle (v:Vle.t) buf =      
   if v <= 0x7fL then MIOBuf.put_byte (Vle.to_int v) buf
   else 
@@ -68,7 +64,7 @@ let decode_vle buf =
     if n < Vle.max_bytes then
       begin
         let c = MIOBuf.get_char buf in         
-        if (from_char c) <= Vle.byte_mask then  ((merge v (masked_from_char c) n), buf)
+        if (from_char c) <= Vle.byte_mask then  (merge v (masked_from_char c) n)
         else decode_vle_rec (merge v (masked_from_char c) n) (n+1) buf              
       end
     else
@@ -87,7 +83,7 @@ let encode_bytes src dst =
   if n <= m then
     begin
       fast_encode_vle (Vle.of_int n) dst;
-      MIOBuf.put_buf src
+      MIOBuf.put_buf src dst
     end
     else      
         raise @@ Atypes.Exception (`OutOfBounds (`Msg (Printf.sprintf "encode_bytes failed because of bounds error %d < %d" n m)))    
@@ -100,7 +96,7 @@ let encode_string s buf =
   let len = String.length s in
   let bs = Lwt_bytes.of_string s in
   fast_encode_vle (Vle.of_int len) buf;
-  MIOBuf.blit_from_bytes bs 0 len
+  MIOBuf.blit_from_bytes bs 0 len buf
     
 let decode_string buf =
   let vlen = fast_decode_vle buf in   
@@ -112,10 +108,10 @@ let decode_string buf =
 let decode_seq read buf  =
   let rec get_remaining seq length buf =
     match length with
-    | 0 -> return (seq, buf)
+    | 0 -> seq
     | _ ->
-      read buf 
-      >>= (fun (value, buf) -> get_remaining (value :: seq) (length - 1) buf)
+      let value = read buf in
+      get_remaining (value :: seq) (length - 1) buf
   in
   let length = fast_decode_vle buf in   
   (get_remaining  [] (Vle.to_int length) buf)
@@ -123,10 +119,10 @@ let decode_seq read buf  =
 let encode_seq write seq buf =
   let rec put_remaining seq buf =
     match seq with
-    | [] -> return buf
+    | [] -> ()
     | head :: rem -> 
-        write head buf 
-        >>= put_remaining rem 
+        write head buf;
+        put_remaining rem buf
   in
     fast_encode_vle (Vle.of_int (List.length seq)) buf;
     put_remaining seq buf

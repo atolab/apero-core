@@ -32,11 +32,11 @@ module MIOBuf = struct
     Logs.debug (fun m -> m "IOBuf.create %d " len);
     { buffer = Lwt_bytes.create len;  pos = 0; limit = len; capacity = len; mark = 0; id = Id.next_id (); grow }
 
-  let to_bytes buf = Lwt_bytes.to_bytes buf.buffer
+  let to_bytes buf = buf.buffer
 
   let from_bytes ?(grow=0) bs =
-    let len = Bytes.length bs in
-    { buffer = Lwt_bytes.of_bytes bs; pos =  0; limit = len; capacity = len; mark = 0; id = Id.next_id (); grow }
+    let len = Lwt_bytes.length bs in
+    { buffer = bs; pos =  0; limit = len; capacity = len; mark = 0; id = Id.next_id (); grow }
 
   let expand_buf orig n = 
     let nbuf = create ~grow:n (n + orig.capacity) in 

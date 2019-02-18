@@ -19,12 +19,12 @@ module MIOBuf : sig
   val create : ?grow:int -> int -> t
   (** [create] allocates a new IOBuf  of the given capacity. *)
 
-  val to_bytes : t -> Bytes.t
+  val to_bytes : t -> Lwt_bytes.t
   (** [to_bytes] provides the [Lwt_bytes.t] representation for this buffer so that
       it can be used for I/O such as sockets, etc... This buffer should be
       considered as read-only. *)
 
-  val from_bytes : ?grow:int -> Bytes.t -> t 
+  val from_bytes : ?grow:int -> Lwt_bytes.t -> t 
   (** [from_bytes] creates an IOBuf by wrapping the provided [Lwt_bytes.t].
       The capacity for the IOBuf will be set to the buffer length. *)
 
