@@ -55,26 +55,41 @@ let decode_vle buf =
       end
   in decode_vle_rec 0L 0
 
-let encode_bytes src dst =
-  let n = Abuf.readable_bytes src in
-  encode_vle (Vle.of_int n) dst;
+
+let encode_buf src dst =
+  let len = Abuf.readable_bytes src in
+  encode_vle (Vle.of_int len) dst;
   Abuf.write_buf src dst 
 
-let decode_bytes buf =
-  let len = decode_vle buf in
-  Abuf.read_buf (Vle.to_int len) buf
-      
+let decode_buf buf =
+  let len = decode_vle buf |> Vle.to_int in
+  Abuf.read_buf len buf
 
-let encode_string s buf =
-  let len = String.length s in
-  let bs = Bytes.unsafe_of_string s in
+
+let encode_bytes bs buf =
+  let len = Bytes.length bs in
   encode_vle (Vle.of_int len) buf;
   Abuf.write_bytes bs buf
     
-let decode_string buf =
-  let vlen = decode_vle buf in
-  let len =  Vle.to_int vlen in    
+let decode_bytes buf =
+  let len = decode_vle buf |> Vle.to_int in
   Abuf.read_bytes len buf
+
+
+let encode_abytes bs buf = 
+  let len = Abytes.capacity bs in
+  encode_vle (Vle.of_int len) buf;
+  Abuf.write_abytes bs buf
+  
+let decode_abytes buf =
+  let len = decode_vle buf |> Vle.to_int in
+  Abuf.read_abytes len buf
+  
+
+let encode_string s = encode_bytes (Bytes.unsafe_of_string s)
+    
+let decode_string buf = 
+  decode_bytes buf 
   |> Bytes.unsafe_to_string
     
 
