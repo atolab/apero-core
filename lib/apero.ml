@@ -77,6 +77,15 @@ let  fast_decode_vle buf =
   Vle.logor !c (Int64.shift_left !acc (!i))
 
 
+let encode_buf src dst =
+  let len = Abuf.readable_bytes src in
+  encode_vle (Vle.of_int len) dst;
+  Abuf.write_buf src dst 
+
+let decode_buf buf =
+  let len = decode_vle buf |> Vle.to_int in
+  Abuf.read_buf len buf
+  
 let encode_bytes bs buf =
   let len = Bytes.length bs in
   fast_encode_vle (Vle.of_int len) buf;
