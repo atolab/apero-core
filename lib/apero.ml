@@ -96,6 +96,13 @@ let decode_abytes buf =
   let len = decode_vle buf |> Vle.to_int in
   Abuf.read_abytes len buf
 
+
+let encode_string s = encode_bytes (Bytes.unsafe_of_string s)
+    
+let decode_string buf = 
+  decode_bytes buf 
+  |> Bytes.unsafe_to_string
+    
 let decode_seq read buf  =
   let rec get_remaining seq length =
     match length with
