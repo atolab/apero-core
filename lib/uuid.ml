@@ -1,6 +1,3 @@
-open Iobuf
-open Acommon
-
 module Uuid = struct
   type t = { uuid:Uuidm.t; alias:string option }
 
@@ -32,14 +29,13 @@ module Uuid = struct
   let nb_bytes = Uuidm.to_bytes ns_apero |> Lwt_bytes.of_string |> Lwt_bytes.length
 
   let encode t buf =
-    let bytes = Lwt_bytes.of_string @@ to_bytes t in
-    IOBuf.blit_from_bytes bytes 0 nb_bytes buf
+    let bytes = t |> to_bytes |> Bytes.of_string  in
+    Abuf.write_bytes bytes buf
 
   let decode buf =
-    let open Result.Infix in
-    IOBuf.blit_to_bytes nb_bytes buf
-    >>= fun (bytes, buf) -> match of_bytes @@ Lwt_bytes.to_string bytes with
-      | Some uuid -> Result.ok (uuid, buf)
-      | None -> Result.fail @@ `InvalidFormat (`Msg ("Failed to decode Uuid"))
+    Abuf.read_bytes nb_bytes buf |> Bytes.to_string |> of_bytes
+    |> function
+      | Some uuid -> uuid
+      | None -> raise @@ Atypes.Exception(`InvalidFormat (`Msg ("Failed to decode Uuid")))
 
 end 
