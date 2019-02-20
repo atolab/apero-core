@@ -1,6 +1,5 @@
 include Atypes
 include Acommon
-include Iobuf
 include State
 include Ordered
 include Key_value
@@ -78,28 +77,24 @@ let  fast_decode_vle buf =
   Vle.logor !c (Int64.shift_left !acc (!i))
 
 
-let encode_bytes src dst =
-  let n = Abuf.readable_bytes src in
-  fast_encode_vle (Vle.of_int n) dst;
-  Abuf.write_buf src dst 
-
-let decode_bytes buf =
-  let len = decode_vle buf in
-  Abuf.read_buf (Vle.to_int len) buf
-      
-
-let encode_string s buf =
-  let len = String.length s in
-  let bs = Bytes.unsafe_of_string s in
+let encode_bytes bs buf =
+  let len = Bytes.length bs in
   fast_encode_vle (Vle.of_int len) buf;
   Abuf.write_bytes bs buf
     
-let decode_string buf =
-  let vlen = decode_vle buf in
-  let len =  Vle.to_int vlen in    
+let decode_bytes buf =
+  let len = decode_vle buf |> Vle.to_int in
   Abuf.read_bytes len buf
-  |> Bytes.unsafe_to_string
-    
+
+
+let encode_abytes bs buf = 
+  let len = Abytes.capacity bs in
+  fast_encode_vle (Vle.of_int len) buf;
+  Abuf.write_abytes bs buf
+  
+let decode_abytes buf =
+  let len = decode_vle buf |> Vle.to_int in
+  Abuf.read_abytes len buf
 
 let decode_seq read buf  =
   let rec get_remaining seq length =

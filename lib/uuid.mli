@@ -1,6 +1,3 @@
-open Iobuf
-open Acommon
-
 module Uuid : sig  
   type t
 
@@ -18,7 +15,6 @@ module Uuid : sig
   val of_string : ?pos:int -> string -> t option
   val to_string : ?upper:bool -> t -> string
 
-  val encode: t -> IOBuf.t -> (IOBuf.t, Atypes.error) Result.t
-  val decode: IOBuf.t -> (t * IOBuf.t, Atypes.error) Result.t
-
+  val encode: t -> Abuf.t -> unit
+  val decode: Abuf.t -> t
 end 
