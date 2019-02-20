@@ -71,7 +71,6 @@ let  fast_decode_vle buf =
   while !c > 0x7fL do         
     let v = Vle.logand !c 0x7fL in     
     acc := Vle.logor !acc (Vle.shift_left v !i);
-    Printf.printf "%d - 0x%LX - 0x%LX\n" !i v !acc;
     c := Vle.of_int @@ int_of_char @@ Abuf.read_byte buf;
     i := !i + 7
   done ;  
