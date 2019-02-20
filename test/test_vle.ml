@@ -10,19 +10,19 @@ let check_if b ?arg line =
     Alcotest.(check bool) test_name b
 
 
-let test_no_size i expected_buf_size =
+let test_no_size  i expected_buf_size =
   let buf = Abuf.create 16 in
-  (try encode_vle i buf |> Result.return with e -> Error e) |> function 
+  (try fast_encode_vle i buf |> Result.return with e -> Error e) |> function 
   | Ok () ->
     begin
-      let _ = Logs_lwt.debug (fun m -> m "encoding %LX result: %s" i (Abuf.hexdump buf)) in
+      let _ = Logs_lwt.debug (fun m -> m "encoding 0x%LX result: %s" i (Abuf.hexdump ~separator:":" buf)) in
       if Abuf.readable_bytes buf = expected_buf_size then
-        (try decode_vle buf |> Result.return with e -> Error e) |> function
+        (try fast_decode_vle buf |> Result.return with e -> Error e) |> function
         | Ok j ->
-          let _ = Logs_lwt.debug (fun m -> m "encoding %LX decoding: %LX" i j) in
+          let _ = Logs_lwt.debug (fun m -> m "encoding 0x%LX decoding: 0x%LX" i j) in
           i = j
         | Error e ->
-          let _ = Logs_lwt.err (fun m -> m "Error decoding VLE %LX : %s" i (Printexc.to_string e)) in
+          let _ = Logs_lwt.err (fun m -> m "Error decoding VLE 0x%LX : %s" i (Printexc.to_string e)) in
           false
       else
         let _ = Logs_lwt.debug (fun m -> m "encoding %LX resulting buffer hasn't the expeted size: %d vs. %d" i (Abuf.readable_bytes buf) expected_buf_size) in
@@ -37,7 +37,7 @@ let test_with_size i expected_buf_size =
   (try encode_vle i ~size:expected_buf_size buf |> Result.return with e -> Error e) |> function 
   | Ok () ->
     begin
-      let _ = Logs_lwt.debug (fun m -> m "encoding %LX result: %s" i (Abuf.hexdump buf)) in
+      let _ = Logs_lwt.debug (fun m -> m "encoding %LX result: %s" i (Abuf.hexdump ~separator:":" buf)) in
       if Abuf.readable_bytes buf = expected_buf_size then
         (try decode_vle buf |> Result.return with e -> Error e) |> function 
         | Ok j ->
