@@ -11,49 +11,47 @@ let check_if b ?arg line =
 
 
 let test_no_size i expected_buf_size =
-  let buf = IOBuf.create 16 in
-  match encode_vle i buf with
-  | Ok buf ->
+  let buf = Abuf.create 16 in
+  (try encode_vle i buf |> Result.return with e -> Error e) |> function 
+  | Ok () ->
     begin
-      let buf = IOBuf.flip buf in
-      let _ = Logs_lwt.debug (fun m -> m "encoding %LX result: %s" i (IOBuf.hexdump buf)) in
-      if IOBuf.limit buf = expected_buf_size then
-        match decode_vle buf with 
-        | Ok (j, _) ->
+      let _ = Logs_lwt.debug (fun m -> m "encoding %LX result: %s" i (Abuf.hexdump buf)) in
+      if Abuf.readable_bytes buf = expected_buf_size then
+        (try decode_vle buf |> Result.return with e -> Error e) |> function
+        | Ok j ->
           let _ = Logs_lwt.debug (fun m -> m "encoding %LX decoding: %LX" i j) in
           i = j
         | Error e ->
-          let _ = Logs_lwt.err (fun m -> m "Error decoding VLE %LX : %s" i (Atypes.show_error e)) in
+          let _ = Logs_lwt.err (fun m -> m "Error decoding VLE %LX : %s" i (Printexc.to_string e)) in
           false
       else
-        let _ = Logs_lwt.debug (fun m -> m "encoding %LX resulting buffer hasn't the expeted size: %d vs. %d" i (IOBuf.limit buf) expected_buf_size) in
+        let _ = Logs_lwt.debug (fun m -> m "encoding %LX resulting buffer hasn't the expeted size: %d vs. %d" i (Abuf.readable_bytes buf) expected_buf_size) in
         false
     end
   | Error e ->
-    let _ = Logs_lwt.err (fun m -> m "Error encoding VLE %LX : %s" i (Atypes.show_error e)) in
+    let _ = Logs_lwt.err (fun m -> m "Error encoding VLE %LX : %s" i (Printexc.to_string e)) in
     false
 
 let test_with_size i expected_buf_size =
-  let buf = IOBuf.create 16 in
-  match encode_vle i ~size:expected_buf_size buf with
-  | Ok buf ->
+  let buf = Abuf.create 16 in
+  (try encode_vle i ~size:expected_buf_size buf |> Result.return with e -> Error e) |> function 
+  | Ok () ->
     begin
-      let buf = IOBuf.flip buf in
-      let _ = Logs_lwt.debug (fun m -> m "encoding %LX result: %s" i (IOBuf.hexdump buf)) in
-      if IOBuf.limit buf = expected_buf_size then
-        match decode_vle buf with 
-        | Ok (j, _) ->
+      let _ = Logs_lwt.debug (fun m -> m "encoding %LX result: %s" i (Abuf.hexdump buf)) in
+      if Abuf.readable_bytes buf = expected_buf_size then
+        (try decode_vle buf |> Result.return with e -> Error e) |> function 
+        | Ok j ->
           let _ = Logs_lwt.debug (fun m -> m "encoding %LX decoding: %LX" i j) in
           i = j
         | Error e ->
-          let _ = Logs_lwt.err (fun m -> m "Error decoding VLE %LX : %s" i (Atypes.show_error e)) in
+          let _ = Logs_lwt.err (fun m -> m "Error decoding VLE %LX : %s" i (Printexc.to_string e)) in
           false
       else
-        let _ = Logs_lwt.debug (fun m -> m "encoding %LX resulting buffer hasn't the expeted size: %d vs. %d" i (IOBuf.limit buf) expected_buf_size) in
+        let _ = Logs_lwt.debug (fun m -> m "encoding %LX resulting buffer hasn't the expeted size: %d vs. %d" i (Abuf.readable_bytes buf) expected_buf_size) in
         false
     end
   | Error e ->
-    let _ = Logs_lwt.err (fun m -> m "Error encoding VLE %LX : %s" i (Atypes.show_error e)) in
+    let _ = Logs_lwt.err (fun m -> m "Error encoding VLE %LX : %s" i (Printexc.to_string e)) in
     false
 
 
