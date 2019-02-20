@@ -83,7 +83,7 @@ let encode_buf src dst =
   Abuf.write_buf src dst 
 
 let decode_buf buf =
-  let len = decode_vle buf |> Vle.to_int in
+  let len = fast_decode_vle buf |> Vle.to_int in
   Abuf.read_buf len buf
   
 let encode_bytes bs buf =
@@ -92,7 +92,7 @@ let encode_bytes bs buf =
   Abuf.write_bytes bs buf
     
 let decode_bytes buf =
-  let len = decode_vle buf |> Vle.to_int in
+  let len = fast_decode_vle buf |> Vle.to_int in
   Abuf.read_bytes len buf
 
 
@@ -102,7 +102,7 @@ let encode_abytes bs buf =
   Abuf.write_abytes bs buf
   
 let decode_abytes buf =
-  let len = decode_vle buf |> Vle.to_int in
+  let len = fast_decode_vle buf |> Vle.to_int in
   Abuf.read_abytes len buf
 
 
@@ -120,7 +120,7 @@ let decode_seq read buf  =
       let value = read buf in
       get_remaining (value :: seq) (length - 1)
   in
-  let length = decode_vle buf in 
+  let length = fast_decode_vle buf in 
   get_remaining  [] (Vle.to_int length)
 
 let encode_seq write seq buf =
