@@ -16,7 +16,7 @@ module EventStream = Event_stream.EventStream.Make(Stream_lwt.Stream)
 
 
 open Result
-
+  
 let encode_vle ?size v buf =
   let to_char l = char_of_int @@ Int64.to_int l in
   let rec put_positive_vle_rec ?size' v' =
@@ -55,9 +55,32 @@ let decode_vle buf =
       end
   in decode_vle_rec 0L 0
 
+let rec fast_encode_vle (v:Vle.t) buf =      
+  if v <= 0x7fL then Abuf.write_byte (char_of_int @@ Vle.to_int v) buf
+  else 
+    begin 
+      let c = Vle.logor (Vle.logand v 0x7fL) 0x80L in 
+      Abuf.write_byte (char_of_int @@ Vle.to_int c) buf;
+      fast_encode_vle (Vle.shift_right v  7) buf
+    end 
+
+let  fast_decode_vle buf =
+  let acc = ref 0L in 
+  let c = ref 0L in 
+  let i = ref 0 in 
+  c := Vle.of_int @@ int_of_char @@ Abuf.read_byte buf;
+  while !c > 0x7fL do         
+    let v = Vle.logand !c 0x7fL in 
+    acc := Vle.logor v (Vle.shift_left !acc !i);
+    c := Vle.of_int @@ int_of_char @@ Abuf.read_byte buf;
+    i := !i + 7
+  done ;  
+  Vle.logor !c (Int64.shift_left !acc (!i))
+
+
 let encode_bytes src dst =
   let n = Abuf.readable_bytes src in
-  encode_vle (Vle.of_int n) dst;
+  fast_encode_vle (Vle.of_int n) dst;
   Abuf.write_buf src dst 
 
 let decode_bytes buf =
@@ -68,7 +91,7 @@ let decode_bytes buf =
 let encode_string s buf =
   let len = String.length s in
   let bs = Bytes.unsafe_of_string s in
-  encode_vle (Vle.of_int len) buf;
+  fast_encode_vle (Vle.of_int len) buf;
   Abuf.write_bytes bs buf
     
 let decode_string buf =
@@ -97,7 +120,7 @@ let encode_seq write seq buf =
       write head buf;
       put_remaining rem 
   in
-  encode_vle (Vle.of_int (List.length seq)) buf;
+  fast_encode_vle (Vle.of_int (List.length seq)) buf;
   put_remaining seq 
 
 let encode_seq_safe write seq buf =
