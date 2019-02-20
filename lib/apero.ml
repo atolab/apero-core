@@ -79,7 +79,7 @@ let  fast_decode_vle buf =
 
 let encode_buf src dst =
   let len = Abuf.readable_bytes src in
-  encode_vle (Vle.of_int len) dst;
+  fast_encode_vle (Vle.of_int len) dst;
   Abuf.write_buf src dst 
 
 let decode_buf buf =
