@@ -219,11 +219,12 @@ let rec blit_to_bigstring ~src ~src_idx ~dst ~dst_idx ~len =
 let rec blit ~src ~src_idx ~dst ~dst_idx ~len = 
   if src_idx >= 0 && len >= 0 && src_idx + len <= capacity src && dst_idx >= 0 
   then 
+    let src_idx = (src.offset + src_idx) in
     if dst_idx + len <= capacity dst 
     then
       match src.buffer with 
-      | Bytes b -> blit_from_bytes ~src:b ~src_idx:(src.offset + src_idx) ~dst ~dst_idx ~len
-      | Bigstr b -> blit_from_bigstring ~src:b ~src_idx:(src.offset + src_idx) ~dst ~dst_idx ~len
+      | Bytes b -> blit_from_bytes ~src:b ~src_idx ~dst ~dst_idx ~len
+      | Bigstr b -> blit_from_bigstring ~src:b ~src_idx ~dst ~dst_idx ~len
       | Bufset b -> 
         let rec blit_fromto_set ~src ~src_idx ~dst ~dst_idx ~len = 
           match src with 
@@ -253,9 +254,10 @@ let rec blit ~src ~src_idx ~dst ~dst_idx ~len =
 let rec get_byte ~at bs =
   if at >= 0 && at + 1 <= capacity bs then
     begin
+      let at = bs.offset + at in
       (match bs.buffer with 
-      | Bytes b -> (Bytes.get b (bs.offset + at))
-      | Bigstr b -> (Bigstringaf.get b (bs.offset + at))
+      | Bytes b -> (Bytes.get b at)
+      | Bigstr b -> (Bigstringaf.get b at)
       | Bufset b -> 
         let rec get_byte_from_set at set = 
           match set with 
