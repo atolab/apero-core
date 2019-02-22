@@ -22,7 +22,8 @@ depends: [
   "logs" 
   "lwt" 
   "ppx_deriving" 
-  "uuidm" 
+  "uuidm"
+  "bigstringaf"
   "lwt_ppx"
   "yojson" {>= "1.5.0" & < "1.6.0"}
   "ppx_deriving_yojson" {= "3.3"}
