@@ -45,7 +45,7 @@ val slice : int -> int -> t -> t
     This operation involves NO COPY. Modifying the content of the returned 
     buffer or of [buf] affects each other's content while they maintain 
     separate positions and marks. The resulting buffer is not expandable. 
-    It's reader position and writer position are set to 0. *)
+    It's reader position and writer position are respectively set to 0 and len. *)
 
 val capacity : t -> int
 (** [capacity buf] returns the number of bytes (octets) the buffer 

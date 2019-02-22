@@ -83,7 +83,7 @@ let slice from len buf =
       id = Id.next_id ();
       buffer =  Abytes.slice from len buf.buffer;
       r_pos = 0;
-      w_pos = 0;
+      w_pos = len;
       r_mark = 0;
       w_mark = 0;
     } 
