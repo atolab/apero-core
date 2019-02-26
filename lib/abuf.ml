@@ -130,37 +130,38 @@ let writable buf = writable_bytes buf > 0
 let skip n buf = set_r_pos (buf.r_pos + n) buf 
 
 
-let blit ~src ~src_idx ~dst ~dst_idx ~len = 
+let [@inline always] blit ~src ~src_idx ~dst ~dst_idx ~len = 
   Abytes.blit ~src:src.buffer ~src_idx ~dst:dst.buffer ~dst_idx ~len
 
-let blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
+let [@inline always] blit_from_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
   Abytes.blit_from_bytes ~src ~src_idx ~dst:dst.buffer ~dst_idx ~len
   
-let blit_to_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
+let [@inline always] blit_to_bytes ~src ~src_idx ~dst ~dst_idx ~len = 
   Abytes.blit_to_bytes ~src:src.buffer ~src_idx ~dst ~dst_idx ~len
 
-let blit_from_bigstring ~src ~src_idx ~dst ~dst_idx ~len = 
+let [@inline always] blit_from_bigstring ~src ~src_idx ~dst ~dst_idx ~len = 
   Abytes.blit_from_bigstring ~src ~src_idx ~dst:dst.buffer ~dst_idx ~len
   
-let blit_to_bigstring ~src ~src_idx ~dst ~dst_idx ~len = 
+let [@inline always] blit_to_bigstring ~src ~src_idx ~dst ~dst_idx ~len = 
   Abytes.blit_to_bigstring ~src:src.buffer ~src_idx ~dst ~dst_idx ~len
 
-let blit_from_abytes ~src ~src_idx ~dst ~dst_idx ~len = 
+let [@inline always] blit_from_abytes ~src ~src_idx ~dst ~dst_idx ~len = 
   Abytes.blit ~src ~src_idx ~dst:dst.buffer ~dst_idx ~len
   
-let blit_to_abytes ~src ~src_idx ~dst ~dst_idx ~len = 
+let [@inline always] blit_to_abytes ~src ~src_idx ~dst ~dst_idx ~len = 
   Abytes.blit ~src:src.buffer ~src_idx ~dst ~dst_idx ~len
 
 
-let read_byte buf = 
+let [@inline always] read_byte buf = 
   let b = Abytes.get_byte ~at:buf.r_pos buf.buffer in 
   buf.r_pos <- buf.r_pos+1 ; b
+  
 
-let read_bytes len buf = 
+let [@inline always] read_bytes len buf = 
   let bs = Abytes.get_bytes ~at:buf.r_pos len buf.buffer in 
   buf.r_pos <- buf.r_pos + len ; bs
  
-let read_abytes len buf = 
+let [@inline always] read_abytes len buf = 
   let bs = Abytes.get_abytes ~at:buf.r_pos len buf.buffer in 
   buf.r_pos <- buf.r_pos+len; bs
 
@@ -173,7 +174,7 @@ let read_buf len buf =
   buf.r_pos <- buf.r_pos+len; bs
    
 
-let get_byte ~at buf =
+let [@inline always] get_byte ~at buf =
   if at + 1 <= buf.w_pos 
   then Abytes.get_byte ~at buf.buffer
   else raise @@ Atypes.Exception (`OutOfBounds (`Msg "A_buf.get_byte"))
@@ -220,15 +221,15 @@ let write_buf bs buf =
   buf.w_pos <- buf.w_pos+(readable_bytes bs)
 
 
-let set_byte b ~at buf = Abytes.set_byte b ~at buf.buffer 
+let [@inline always] set_byte b ~at buf = Abytes.set_byte b ~at buf.buffer 
   
-let set_bytes bs ~at buf = Abytes.set_bytes bs ~at buf.buffer 
+let [@inline always] set_bytes bs ~at buf = Abytes.set_bytes bs ~at buf.buffer 
 
-let set_abytes bs ~at buf = Abytes.set_abytes bs ~at buf.buffer 
+let [@inline always] set_abytes bs ~at buf = Abytes.set_abytes bs ~at buf.buffer 
 
-let set_bigstring bs ~at buf = Abytes.set_bigstring bs ~at buf.buffer 
+let [@inline always] set_bigstring bs ~at buf = Abytes.set_bigstring bs ~at buf.buffer 
 
-let set_buf bs ~at buf = Abytes.set_abytes bs.buffer ~at buf.buffer 
+let [@inline always] set_buf bs ~at buf = Abytes.set_abytes bs.buffer ~at buf.buffer 
 
 
 let to_io_vecs ~idx ~len ~append_bytes ~append_bigarray io_vecs buf = 
@@ -244,3 +245,24 @@ let hexdump ?separator:(sep="") buf =
     
 let to_string buf =
   "(r_pos: " ^ (string_of_int buf.r_pos) ^ ", w_pos: " ^ (string_of_int buf.w_pos) ^ " content: " ^ (hexdump buf ~separator:":") ^ ")"
+
+
+let compact pos buf = 
+  if buf.r_pos = buf.w_pos then 
+    begin
+      buf.r_pos <- 0;
+      buf.w_pos <- 0
+    end 
+  else   
+    begin 
+      let i = ref 0 in 
+      buf.r_pos <- pos;               
+      let rbs = readable_bytes buf in
+      while !i < rbs do 
+        Abytes.set_byte (read_byte buf) ~at:!i buf.buffer;    
+        i := !i + 1
+      done ;
+      buf.r_pos <- 0;
+      buf.w_pos <- !i
+    end
+    

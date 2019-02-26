@@ -54,6 +54,9 @@ val capacity : t -> int
 val clear : t -> unit
 (** [clear buf] sets the reader position and writer position of [buf] to 0. *)
 
+val compact : int -> t -> unit 
+(**  [compact buf] moves the current content of the buffer so that the first byte starts at r_pos = 0. *)
+
 val r_pos : t -> int
 (** [r_pos buf] returns the reader position of [buf]. *)
 
