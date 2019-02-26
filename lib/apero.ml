@@ -15,7 +15,7 @@ module EventStream = Event_stream.EventStream.Make(Stream_lwt.Stream)
 
 
 open Result
-
+  
 let encode_vle ?size v buf =
   let to_char l = char_of_int @@ Int64.to_int l in
   let rec put_positive_vle_rec ?size' v' =
@@ -54,36 +54,56 @@ let decode_vle buf =
       end
   in decode_vle_rec 0L 0
 
+let rec fast_encode_vle (v:Vle.t) buf =      
+  if v <= 0x7fL then Abuf.write_byte (char_of_int @@ Vle.to_int v) buf
+  else 
+    begin 
+      let c = Vle.logor (Vle.logand v 0x7fL) 0x80L in 
+      Abuf.write_byte (char_of_int @@ Vle.to_int c) buf;
+      fast_encode_vle (Vle.shift_right v  7) buf
+    end 
+
+let  fast_decode_vle buf =
+  let acc = ref 0L in 
+  let c = ref 0L in 
+  let i = ref 0 in 
+  c := Vle.of_int @@ int_of_char @@ Abuf.read_byte buf;
+  while !c > 0x7fL do         
+    let v = Vle.logand !c 0x7fL in     
+    acc := Vle.logor !acc (Vle.shift_left v !i);
+    c := Vle.of_int @@ int_of_char @@ Abuf.read_byte buf;
+    i := !i + 7
+  done ;  
+  Vle.logor !acc (Int64.shift_left !c (!i))
+
 
 let encode_buf src dst =
   let len = Abuf.readable_bytes src in
-  encode_vle (Vle.of_int len) dst;
+  fast_encode_vle (Vle.of_int len) dst;
   Abuf.write_buf src dst 
 
 let decode_buf buf =
-  let len = decode_vle buf |> Vle.to_int in
+  let len = fast_decode_vle buf |> Vle.to_int in
   Abuf.read_buf len buf
-
-
+  
 let encode_bytes bs buf =
   let len = Bytes.length bs in
-  encode_vle (Vle.of_int len) buf;
+  fast_encode_vle (Vle.of_int len) buf;
   Abuf.write_bytes bs buf
     
 let decode_bytes buf =
-  let len = decode_vle buf |> Vle.to_int in
+  let len = fast_decode_vle buf |> Vle.to_int in
   Abuf.read_bytes len buf
 
 
 let encode_abytes bs buf = 
   let len = Abytes.capacity bs in
-  encode_vle (Vle.of_int len) buf;
+  fast_encode_vle (Vle.of_int len) buf;
   Abuf.write_abytes bs buf
   
 let decode_abytes buf =
-  let len = decode_vle buf |> Vle.to_int in
+  let len = fast_decode_vle buf |> Vle.to_int in
   Abuf.read_abytes len buf
-  
 
 let encode_string s = encode_bytes (Bytes.unsafe_of_string s)
     
@@ -91,7 +111,6 @@ let decode_string buf =
   decode_bytes buf 
   |> Bytes.unsafe_to_string
     
-
 let decode_seq read buf  =
   let rec get_remaining seq length =
     match length with
@@ -100,7 +119,7 @@ let decode_seq read buf  =
       let value = read buf in
       get_remaining (value :: seq) (length - 1)
   in
-  let length = decode_vle buf in 
+  let length = fast_decode_vle buf in 
   get_remaining  [] (Vle.to_int length)
 
 let encode_seq write seq buf =
@@ -111,7 +130,7 @@ let encode_seq write seq buf =
       write head buf;
       put_remaining rem 
   in
-  encode_vle (Vle.of_int (List.length seq)) buf;
+  fast_encode_vle (Vle.of_int (List.length seq)) buf;
   put_remaining seq 
 
 let encode_seq_safe write seq buf =
