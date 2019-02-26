@@ -76,6 +76,10 @@ let  fast_decode_vle buf =
   done ;  
   Vle.logor !acc (Int64.shift_left !c (!i))
 
+let rec skip_vle buf = 
+  Abuf.read_byte buf |> Vle.of_char |> Vle.logand Vle.more_bytes_flag <> 0L |> function 
+  | true -> skip_vle buf 
+  | false -> ()
 
 let encode_buf src dst =
   let len = Abuf.readable_bytes src in
