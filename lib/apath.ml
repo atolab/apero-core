@@ -14,10 +14,10 @@ module Path = struct
   (* from https://tools.ietf.org/html/rfc3986#appendix-B :
      the path of a URI contains any char but '?' or '#'.
      We add '*', '[' and ']' as forbidden char *)
-  let is_valid s = 
-    let rec is_valid_rec i = 
-      if i >= String.length s then true 
-      else match String.get s i with 
+  let is_valid s =
+    let rec is_valid_rec i =
+      if i >= Astring.length s then true
+      else match Astring.unsafe_get s i with
       | '?' -> false                     (* ? not allowed *)
       | '#' -> false                     (* # not allowed *)
       | '[' -> false                     (* [ not allowed *)
@@ -42,7 +42,7 @@ module Path = struct
 
   let equal = Astring.equal
 
-  let is_relative p = Astring.get p 0 <> '/'
+  let is_relative p = if length p = 0 then true else Astring.unsafe_get p 0 <> '/'
 
   let add_prefix ~prefix p = remove_useless_slashes @@ (to_string prefix)^"/"^p
 
@@ -60,21 +60,21 @@ module PathExpr = struct
       - we don't allow '[' or ']' in the path part
    *)
   let is_valid s = 
-    let rec is_valid_rec i = 
-      if i >= String.length s then true 
-      else match String.get s i with 
+    let rec is_valid_rec i =
+      if i >= String.length s then true
+      else match String.unsafe_get s i with
         | '?' -> false                     (* ? not allowed *)
         | '#' -> false                     (* # not allowed *)
         | '[' -> false                     (* [ not allowed *)
         | ']' -> false                     (* ] not allowed *)
         | '/' -> is_valid_rec (i+1)
-        | '*' -> (if i+2 >= String.length s then true 
-                  else match (String.get s (i+1), String.get s (i+2)) with 
+        | '*' -> (if i+2 >= String.length s then true
+                  else match (String.unsafe_get s (i+1), String.unsafe_get s (i+2)) with
                   | ('*', '/') -> is_valid_rec (i+1)
                   | ('*', _) -> false      (* **a and *** not allowed *)
                   | _ -> is_valid_rec (i+1) )
-        | _   -> (if i+2 >= String.length s then true 
-                  else match (String.get s (i+1), String.get s (i+2)) with 
+        | _   -> (if i+2 >= String.length s then true
+                  else match (String.unsafe_get s (i+1), String.unsafe_get s (i+2)) with
                   | ('*', '*') -> false    (* a** not allowed *)
                   | _ -> is_valid_rec (i+1) )
     in is_valid_rec 0
@@ -97,7 +97,7 @@ module PathExpr = struct
 
   let equal = Astring.equal
 
-  let is_relative e = Astring.get e 0 <> '/'
+  let is_relative e = if length e = 0 then true else Astring.unsafe_get e 0 <> '/'
 
   let get_prefix e : Path.t = match Astring.find (fun c -> c = '*') e with
     | Some i -> Path.of_string @@ Astring.before i e
@@ -114,14 +114,15 @@ module PathExpr = struct
 
   type 'a element = | Some of 'a | Wildcard | None
 
-  let get_char s i = 
-    try match String.get s i with 
+  let get_char s i =
+    if i >= length s then None
+    else
+      match Astring.unsafe_get s i with
       | '*' -> Wildcard
       | c -> Some c
-    with Invalid_argument _ -> None
 
   let get_chunk l i = match List.nth_opt l i with 
-    | Some str -> if String.equal str "**" then Wildcard else Some str
+    | Some str -> if Astring.equal str "**" then Wildcard else Some str
     | None -> None
 
   let intersect ?(allow_empty=true) l1 l2 get elem_intersect = 
