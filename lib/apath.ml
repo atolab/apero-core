@@ -1,13 +1,19 @@
 open Acommon
 open Atypes
 
-let remove_useless_slashes s = 
-  String.split_on_char '/' s 
+let slash_sub = Astring.Sub.v "/"
+let wildcard2_sub = Astring.Sub.v "**"
+
+
+let remove_useless_slashes s =
+  let open Astring.Sub in
+  cuts ~sep:slash_sub (v s)
   |> (function 
     | [] -> []
-    | [""; ""] -> [""; ""]
-    | x :: l -> x :: List.filter (fun s -> String.length s > 0) l )
-  |> String.concat "/"
+    | [e; e'] when is_empty e && is_empty e' -> [empty; empty]
+    | x :: l -> x :: List.filter (fun s -> not (is_empty s)) l )
+  |> concat ~sep:slash_sub
+  |> to_string
 
 module Path = struct
   type t = string
@@ -115,14 +121,15 @@ module PathExpr = struct
   type 'a element = | Some of 'a | Wildcard | None
 
   let get_char s i =
+    let open Astring.Sub in
     if i >= length s then None
     else
-      match Astring.unsafe_get s i with
+      match unsafe_get s i with
       | '*' -> Wildcard
       | c -> Some c
 
   let get_chunk l i = match List.nth_opt l i with 
-    | Some str -> if Astring.equal str "**" then Wildcard else Some str
+    | Some sub -> if Astring.Sub.equal_bytes sub wildcard2_sub then Wildcard else Some sub
     | None -> None
 
   let intersect ?(allow_empty=true) l1 l2 get elem_intersect = 
@@ -161,9 +168,10 @@ module PathExpr = struct
 
   let chunk_expr_intersect e1 e2 = intersect e1 e2 get_char Char.equal ~allow_empty:false
 
-  let intersect e1 e2 = 
-    let e1_chunks = String.split_on_char '/' e1 in
-    let e2_chunks = String.split_on_char '/' e2 in 
+  let intersect e1 e2 =
+    let open Astring.Sub in
+    let e1_chunks = cuts ~sep:slash_sub (v e1) in
+    let e2_chunks = cuts ~sep:slash_sub (v e2) in 
     intersect e1_chunks e2_chunks get_chunk chunk_expr_intersect
 
   let is_matching_path = intersect
@@ -171,8 +179,9 @@ module PathExpr = struct
   let chunk_expr_includes sub ce = includes sub ce get_char Char.equal 
 
   let includes ~subexpr e = 
-    let sub_chunks = String.split_on_char '/' subexpr in
-    let e_chunks = String.split_on_char '/' e in 
+    let open Astring.Sub in
+    let sub_chunks = cuts ~sep:slash_sub (v subexpr) in
+    let e_chunks = cuts ~sep:slash_sub (v e) in 
     includes sub_chunks e_chunks get_chunk chunk_expr_includes
 
   let rec longest_matching_part path e =
