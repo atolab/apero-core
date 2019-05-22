@@ -226,7 +226,7 @@ module LwtM = struct
     | Ok v -> Lwt.return v
     | Error e -> Lwt.fail (to_exn e)
 
-  let sequence a b = a >>= fun _ -> b  
+  let sequence a (lazy b) = a >>= fun _ -> b
 
   let flatten xs = 
     let rec do_flatten acc ys = 
@@ -237,8 +237,8 @@ module LwtM = struct
 
   let read_mvar mvar = 
     match Lwt_mvar.take_available mvar with 
-    | Some v -> sequence (Lwt_mvar.put mvar v) (Lwt.return v)
-    | None -> Lwt_mvar.take mvar >>= (fun v -> sequence (Lwt_mvar.put mvar v) (Lwt.return v))
+    | Some v -> sequence (Lwt_mvar.put mvar v) (lazy (Lwt.return v))
+    | None -> Lwt_mvar.take mvar >>= (fun v -> sequence (Lwt_mvar.put mvar v) (lazy (Lwt.return v)))
 
   module InfixM = struct 
     let (<$>) = lift
