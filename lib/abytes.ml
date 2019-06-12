@@ -326,9 +326,10 @@ let set_abytes src ~at bs =
 let rec to_io_vecs ~idx ~len ~append_bytes ~append_bigarray io_vecs bs = 
   if capacity bs >= idx + len 
   then 
+    let idx = bs.offset + idx in
     match bs.buffer with 
-    | Bytes b -> append_bytes io_vecs b (bs.offset + idx) len 
-    | Bigstr b -> append_bigarray io_vecs b (bs.offset + idx) len 
+    | Bytes b -> append_bytes io_vecs b idx len 
+    | Bigstr b -> append_bigarray io_vecs b idx len 
     | Bufset b -> 
       let rec set_to_io_vecs ~idx ~len ~append_bytes ~append_bigarray io_vecs b = match b with 
       | [] -> ()
