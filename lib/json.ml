@@ -1,7 +1,7 @@
 open Acommon.Result
 module Json = struct
 
-  type t = Yojson.Safe.json
+  type t = Yojson.Safe.t
 
   let to_string j = Yojson.Safe.to_string j
 
