@@ -17,12 +17,14 @@ module Properties = struct
   let to_list = bindings
 
   let of_string ?(prop_sep=";") ?(kv_sep="=") s =
-    let add_prop props p =
-      match Astring.cut ~sep:kv_sep p with
-      | Some (k,v) -> add k v props
-      | None -> add p "" props
-    in
-    Astring.cuts ~sep:prop_sep s |> List.fold_left add_prop empty
+    if (String.length s = 0) then empty
+    else
+      let add_prop props p =
+        match Astring.cut ~sep:kv_sep p with
+        | Some (k,v) -> add k v props
+        | None -> add p "" props
+      in
+      Astring.cuts ~sep:prop_sep s |> List.fold_left add_prop empty
 
 
   let to_string ?(prop_sep=";") ?(kv_sep="=") (p:Property.Value.t t) =
