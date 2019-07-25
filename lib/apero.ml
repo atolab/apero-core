@@ -124,7 +124,7 @@ let decode_seq read buf  =
       get_remaining (value :: seq) (length - 1)
   in
   let length = fast_decode_vle buf in 
-  get_remaining  [] (Vle.to_int length)
+  List.rev @@ get_remaining [] (Vle.to_int length)
 
 let encode_seq write seq buf =
   let rec put_remaining seq =
