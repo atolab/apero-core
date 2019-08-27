@@ -10,15 +10,16 @@ license: "Apache-2.0"
 
 
 build: [
- ["dune" "build" "--only" "apero-core" "--root" "." "-j" jobs "@install"]
+ ["dune" "build" "--only" "dynload-sys" "--root" "." "-j" jobs "@install"]
 ]
 
 depends: [
   "ocaml" {>= "4.03.0" & < "4.08.0"}
   "dune"
+  "apero-core"
 ]
 
 synopsis : "Sys.argv override for dynamically loaded libraries"
 description: """
-Dynload-sys is a library that allows, when linked with an ocaml library, 
+Dynload-sys is a library that allows, when linked with an ocaml library,
 to dynamically load the ocaml library with a new set of Sys.arv arguments."""
