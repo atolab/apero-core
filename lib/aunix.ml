@@ -7,12 +7,20 @@ let inet_addrs () =
         | _::flags::"mtu"::_ -> flags |> split_on_char '<' |> tl |> hd |>
                                 split_on_char '>' |> hd |> split_on_char ',' |>
                                 recurse inchan l
-        | "inet"::addr::_ -> recurse inchan ((Unix.inet_addr_of_string addr, f)::l) f
+        | _::_::flags::"mtu"::_ -> flags |> split_on_char '<' |> tl |> hd |>
+                                   split_on_char '>' |> hd |> split_on_char ',' |>
+                                   recurse inchan l
+        | "inet"::addr::_ -> let addr = addr |> split_on_char '/' |> hd in 
+                             recurse inchan ((Unix.inet_addr_of_string addr, f)::l) f
         | _ -> recurse inchan l f
       ))
     with _ -> l
   in
-  recurse (Unix.open_process_in "ifconfig") [] []
+  let stdout_chan, _, _  = Unix.open_process_full  "ip a" (Unix.environment ()) in
+  match recurse stdout_chan [] [] with 
+  | [] -> let stdout_chan, _, _  = Unix.open_process_full  "ifconfig" (Unix.environment ()) in
+          recurse stdout_chan [] [] 
+  | ls -> ls
 
 let inet_addrs_up_nolo = 
   Acommon.Infix.(String.(List.(
