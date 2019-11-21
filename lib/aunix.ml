@@ -16,11 +16,13 @@ let inet_addrs () =
       ))
     with _ -> l
   in
-  let stdout_chan, _, _  = Unix.open_process_full  "ip a" (Unix.environment ()) in
+  let stdout_chan, stdin_chan, stderr_chan  = Unix.open_process_full "ip a" (Unix.environment ()) in
   match recurse stdout_chan [] [] with 
-  | [] -> let stdout_chan, _, _  = Unix.open_process_full  "ifconfig" (Unix.environment ()) in
-          recurse stdout_chan [] [] 
-  | ls -> ls
+  | [] -> (try let _ = Unix.close_process_full (stdout_chan, stdin_chan, stderr_chan) in () with _ -> ());
+          let stdout_chan, stdin_chan, stderr_chan  = Unix.open_process_full "ifconfig" (Unix.environment ()) in
+          let result = recurse stdout_chan [] [] in 
+          (try let _ = Unix.close_process_full (stdout_chan, stdin_chan, stderr_chan) in () with _ -> ()); result
+  | ls -> (try let _ = Unix.close_process_full (stdout_chan, stdin_chan, stderr_chan) in () with _ -> ()); ls
 
 let inet_addrs_up_nolo = 
   Acommon.Infix.(String.(List.(
