@@ -27,6 +27,8 @@ depends: [
   "lwt_ppx"
   "yojson" {>= "1.6.0" & <= "1.7.0"}
   "ppx_deriving_yojson" {= "3.5"}
+  "ocp-ocamlres"
+  "atdgen"
 ]
 
 synopsis : "OCaml Utility Library"
