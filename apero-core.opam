@@ -14,7 +14,7 @@ build: [
 ]
 
 depends: [
-  "ocaml" {>= "4.03.0" & < "4.08.0"}
+  "ocaml"
   "dune"
   "astring"
   "cmdliner"
@@ -25,8 +25,8 @@ depends: [
   "uuidm"
   "bigstringaf"
   "lwt_ppx"
-  "yojson" {>= "1.6.0" & <= "1.7.0"}
-  "ppx_deriving_yojson" {= "3.5"}
+  "yojson" 
+  "ppx_deriving_yojson"
 ]
 
 synopsis : "OCaml Utility Library"
