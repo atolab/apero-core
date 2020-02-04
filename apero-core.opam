@@ -14,8 +14,8 @@ build: [
 ]
 
 depends: [
-  "ocaml" {= "1.11.4"}
-  "dune"
+  "ocaml" {>= "4.03.0"}
+  "dune" {= "1.11.4"}
   "astring"
   "cmdliner"
   "fmt"
