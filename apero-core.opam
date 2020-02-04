@@ -14,18 +14,18 @@ build: [
 ]
 
 depends: [
-  "ocaml" {>= "4.03.0"}
+  "ocaml" {= "1.11.4"}
   "dune"
   "astring"
   "cmdliner"
-  "fmt" 
-  "logs" 
-  "lwt" {< "5.0.0"}
-  "ppx_deriving" 
+  "fmt"
+  "logs"
+  "lwt" {= "4.5.0"}
+  "ppx_deriving"
   "uuidm"
   "bigstringaf"
   "lwt_ppx"
-  "yojson" 
+  "yojson"
   "ppx_deriving_yojson"
 ]
 

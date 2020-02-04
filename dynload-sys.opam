@@ -15,8 +15,8 @@ build: [
 
 depends: [
   "ocaml" {>= "4.03.0"}
-  "dune"
-  "apero-core"
+  "dune" {= "1.11.4"}
+  "apero-core" {= "0.4.6"}
 ]
 
 synopsis : "Sys.argv override for dynamically loaded libraries"
